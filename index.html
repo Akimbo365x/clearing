@@ -612,6 +612,46 @@ tbody tr:hover td{background:var(--panel-3)}
 
 .empty{padding:34px 20px; text-align:center; color:var(--faint); font-family:var(--f-mono); font-size:12.5px}
 
+/* ============ checked register ============ */
+
+/* headline counters above the list */
+.tally{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);
+  border:1px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:18px; box-shadow:var(--card-sh)}
+@media(max-width:520px){ .tally{grid-template-columns:1fr} }
+.tally div{background:linear-gradient(180deg,var(--panel-2),var(--panel)); padding:15px 18px 17px}
+.tally .tk2{display:block; font-family:var(--f-mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:5px}
+.tally .tv{display:block; font-size:22px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.tally .tv em{font-style:normal; color:var(--accent)}
+
+.ledger{border:1px solid var(--line); border-radius:var(--r); overflow:hidden; box-shadow:var(--card-sh)}
+.row-tok{
+  all:unset; box-sizing:border-box; cursor:pointer; width:100%;
+  display:flex; align-items:center; gap:14px; padding:13px 18px;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border-bottom:1px solid var(--line-soft); position:relative;
+  transition:background .16s ease, padding-left .16s ease;
+}
+.row-tok:last-child{border-bottom:none}
+.row-tok:hover{background:var(--panel-3); padding-left:22px}
+.row-tok:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+/* the bar behind each row shows how often it was scanned, relative to the top one */
+.row-tok .heat{position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent); opacity:.055; pointer-events:none}
+.row-tok .rk{font-family:var(--f-mono); font-size:11px; color:var(--faint); width:26px; flex:none; font-variant-numeric:tabular-nums}
+.row-tok img{width:32px; height:32px; border-radius:50%; flex:none; object-fit:cover; background:var(--panel-3)}
+.row-tok .ph{width:32px; height:32px; border-radius:50%; flex:none; display:grid; place-items:center;
+  background:var(--panel-3); color:var(--faint); font-size:10px; font-weight:700}
+.row-tok .who2{min-width:0; flex:1; display:flex; flex-direction:column; gap:1px}
+.row-tok .s{font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row-tok .n{font-size:11.5px; color:var(--faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row-tok .when{font-family:var(--f-mono); font-size:11px; color:var(--faint); flex:none; white-space:nowrap}
+.row-tok .hits{
+  flex:none; font-family:var(--f-mono); font-size:11.5px; font-weight:700; color:var(--accent);
+  border:1px solid var(--accent-dim); border-radius:100px; padding:3px 10px; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:560px){ .row-tok .when{display:none} .row-tok .n{display:none} }
+
 /* ============ prose (method / about) ============ */
 
 .prose{max-width:70ch}
@@ -936,7 +976,8 @@ footer p:last-child{margin-bottom:0}
       <div class="eyebrow">Checked on Clearing</div>
       <h2 class="sec">What people are scanning</h2>
       <p class="sec">Every token run through the scanner lands here, newest first, with how many times it has been checked. No accounts, no visitor data — just the tokens.</p>
-      <div class="grid" id="checkedGrid"><div class="empty">Loading…</div></div>
+      <div class="tally" id="tally" hidden></div>
+      <div class="ledger" id="checkedGrid"><div class="empty">Loading…</div></div>
     </div>
   </div>
 </div>
@@ -2060,7 +2101,9 @@ footer p:last-child{margin-bottom:0}
     show((location.hash || "#scanner").slice(1), false);
   });
 
-  show((location.hash || "#scanner").slice(1), false);
+  /* The opening view is selected at the very end of this module: landing
+     straight on #checked or #trending calls a loader whose variables are
+     declared below, and running it here would hit them before assignment. */
 
   /* ---------------- trending grid ---------------- */
 
@@ -2111,20 +2154,27 @@ footer p:last-child{margin-bottom:0}
     return Math.round(s / 86400) + "d ago";
   }
 
-  function checkedCard(t){
+  function checkedRow(t, rank, top){
     var el = document.createElement("button");
     el.type = "button";
-    el.className = "tcard";
+    el.className = "row-tok";
     el.title = "Scan " + (t.name || t.mint);
+
+    var hits = t.count || 1;
     el.innerHTML =
+      '<span class="heat"></span>' +
+      '<span class="rk">' + rank + '</span>' +
       (t.img ? '<img src="' + t.img + '" alt="" loading="lazy" onerror="this.remove()">'
              : '<span class="ph"></span>') +
-      '<span class="tx"><span class="s"></span><span class="n"></span></span>' +
-      '<span class="p"></span>';
+      '<span class="who2"><span class="s"></span><span class="n"></span></span>' +
+      '<span class="when"></span>' +
+      '<span class="hits">' + hits + (hits > 1 ? " scans" : " scan") + '</span>';
+
     if(!t.img) el.querySelector(".ph").textContent = (t.sym || "?").slice(0,3).toUpperCase();
     el.querySelector(".s").textContent = (t.sym || t.mint.slice(0,4)).toUpperCase();
-    el.querySelector(".n").textContent = ago(t.last);
-    el.querySelector(".p").textContent = "×" + (t.count || 1);
+    el.querySelector(".n").textContent = t.name || t.mint.slice(0,4) + "…" + t.mint.slice(-4);
+    el.querySelector(".when").textContent = ago(t.last);
+    el.querySelector(".heat").style.width = Math.max(4, (hits / top) * 100) + "%";
 
     el.addEventListener("click", function(){
       show("scanner", true);
@@ -2134,6 +2184,18 @@ footer p:last-child{margin-bottom:0}
     return el;
   }
 
+  function paintTally(list){
+    var tally = document.getElementById("tally");
+    var scans = list.reduce(function(a, t){ return a + (t.count || 1); }, 0);
+    var most = list.slice().sort(function(a, b){ return (b.count || 1) - (a.count || 1); })[0];
+    tally.innerHTML =
+      '<div><span class="tk2">Tokens tracked</span><span class="tv">' + list.length + '</span></div>' +
+      '<div><span class="tk2">Scans run</span><span class="tv">' + scans + '</span></div>' +
+      '<div><span class="tk2">Most checked</span><span class="tv"><em>' +
+        ((most && (most.sym || most.mint.slice(0,4))) || "—").toUpperCase() + '</em></span></div>';
+    tally.hidden = false;
+  }
+
   function loadChecked(){
     checkedGrid.innerHTML = '<div class="empty">Loading…</div>';
     fetch("/api/scans", {cache:"no-store"})
@@ -2141,15 +2203,20 @@ footer p:last-child{margin-bottom:0}
       .then(function(j){
         var list = (j && j.scans) || [];
         if(!list.length){
+          document.getElementById("tally").hidden = true;
           checkedGrid.innerHTML = '<div class="empty">Nothing scanned yet. Be the first — run a token through the scanner.</div>';
           return;
         }
+
+        paintTally(list);
+
+        var top = list.reduce(function(m, t){ return Math.max(m, t.count || 1); }, 1);
         checkedGrid.innerHTML = "";
         list.forEach(function(t, i){
-          var c = checkedCard(t);
-          c.style.animation = "rise .4s cubic-bezier(.22,.9,.3,1) both";
-          c.style.animationDelay = Math.min(i * 22, 400) + "ms";
-          checkedGrid.appendChild(c);
+          var row = checkedRow(t, i + 1, top);
+          row.style.animation = "rise .38s cubic-bezier(.22,.9,.3,1) both";
+          row.style.animationDelay = Math.min(i * 18, 360) + "ms";
+          checkedGrid.appendChild(row);
         });
       })
       .catch(function(){
@@ -2199,6 +2266,9 @@ footer p:last-child{margin-bottom:0}
         trendLoaded = false;
       });
   }
+
+  /* everything the loaders need now exists — open the requested view */
+  show((location.hash || "#scanner").slice(1), false);
 })();
 (function(){
   "use strict";
