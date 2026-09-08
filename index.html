@@ -1528,14 +1528,36 @@ footer p:last-child{margin-bottom:0}
 
   /* ---------------- analysis ---------------- */
 
+  /* People paste whatever they copied: a bare address, a pump.fun or Solscan
+     URL, a line with an invisible character in it. Pull the address out of
+     any of those instead of rejecting the lot. */
+  function extractMint(raw){
+    if(!raw) return null;
+    /* strip zero-width and non-breaking characters that survive a copy */
+    var s = raw.replace(/[​-‍⁠﻿ ]/g, "").trim();
+
+    if(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s)) return s;
+
+    /* longest base58 run anywhere in the text wins — that is the address */
+    var runs = s.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
+    if(runs && runs.length){
+      return runs.sort(function(a,b){ return b.length - a.length; })[0];
+    }
+    return null;
+  }
+
   function analyse(){
-    var mint = caEl.value.trim();
+    var raw = caEl.value;
     errEl.classList.remove("on");
 
-    if(!mint){ return fail("Paste a contract address first."); }
-    if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)){
-      return fail("That does not look like a Solana address. Check the copy-paste.");
+    if(!raw.trim()){ return fail("Paste a contract address first."); }
+
+    var mint = extractMint(raw);
+    if(!mint){
+      return fail("No Solana address found in what you pasted. A contract address is 32 to 44 characters — you can paste the address itself, or a Pump.fun, DexScreener or Solscan link that contains it.");
     }
+    /* show the cleaned address back, so it is obvious what got analysed */
+    if(caEl.value !== mint) caEl.value = mint;
 
     busy(true);
     skeleton();
