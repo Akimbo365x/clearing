@@ -183,9 +183,11 @@ a:hover{text-decoration:underline}
   all:unset; cursor:pointer; width:22px; height:22px; border-radius:5px; flex:none;
   display:grid; place-items:center; opacity:.6; transition:opacity .16s ease, background .16s ease;
 }
+.cabar .cacopy[hidden]{display:none}
 .cabar .cacopy:hover{opacity:1; background:var(--panel-2)}
 .cabar .cacopy svg{width:12px; height:12px; display:block; pointer-events:none}
 .cabar .val{color:var(--text)}
+.cabar .val.soon{color:var(--faint); letter-spacing:.14em; text-transform:uppercase; font-size:10.5px}
 .cabar .buy{
   flex:none; text-decoration:none; color:#0A0C10;
   background:linear-gradient(96deg,#9945FF,#6FA8FF 52%,#14F195);
@@ -2411,18 +2413,31 @@ footer p:last-child{margin-bottom:0}
    the top of every page, with the buy link beside it. Leave it empty and
    nothing shows — the site never advertises a token that does not exist.
    ============================================================ */
-var CLEARING_CA  = "";
-var CLEARING_BUY = "";   // optional: a pump.fun / jup.ag / dexscreener link
+var CLEARING_CA      = "";     // the real contract address, once it exists
+var CLEARING_BUY     = "";     // optional override for the buy link
+var CLEARING_PREVIEW = true;   // show the bar before launch, without an address
 
 (function(){
   "use strict";
-  if(!CLEARING_CA) return;
-
   var bar = document.getElementById("caBar");
+
+  /* Before launch: the bar is shown so the layout is real, but no address is
+     printed. A made-up contract address would be copied by someone sooner or
+     later, and money would go to a token that is not yours. */
+  if(!CLEARING_CA){
+    if(!CLEARING_PREVIEW) return;
+    document.getElementById("caBarVal").textContent = "coming soon";
+    document.getElementById("caBarVal").classList.add("soon");
+    document.getElementById("caBarCopy").hidden = true;
+    document.getElementById("caBarBuy").href = "https://pump.fun";
+    bar.hidden = false;
+    return;
+  }
+
   document.getElementById("caBarVal").textContent = CLEARING_CA;
 
   var buy = document.getElementById("caBarBuy");
-  buy.href = CLEARING_BUY || ("https://jup.ag/swap/SOL-" + CLEARING_CA);
+  buy.href = CLEARING_BUY || ("https://pump.fun/coin/" + CLEARING_CA);
 
   document.getElementById("caBarCopy").addEventListener("click", function(){
     var btn = this, old = btn.innerHTML;
