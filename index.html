@@ -54,7 +54,38 @@
   --gutter:clamp(18px,5vw,28px);
   --r:14px;
   --r-sm:9px;
-  --ticker-h:38px;
+  --ticker-h:46px;
+
+  --glow-a:rgba(111,168,255,.13);
+  --glow-b:rgba(63,185,138,.05);
+  --grid:rgba(255,255,255,.021);
+  --bar-bg:rgba(13,16,21,.82);
+  --shadow:var(--shadow);
+}
+
+/* Light theme. Dark is the default — this only applies once the toggle sets
+   data-theme="light" on <html>, which is also what localStorage restores. */
+:root[data-theme="light"]{
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-2:#F2F5F9;
+  --panel-3:#E7ECF3;
+  --line:#DCE3EC;
+  --line-soft:#E9EEF4;
+  --text:#101822;
+  --muted:#54606F;
+  --faint:#8A94A2;
+  --accent:#2563EB;
+  --accent-dim:#9BB8F5;
+  --ok:#0E9F6E;
+  --warn:#B45309;
+  --bad:#D0342C;
+
+  --glow-a:rgba(37,99,235,.10);
+  --glow-b:rgba(14,159,110,.05);
+  --grid:rgba(16,24,34,.032);
+  --bar-bg:rgba(255,255,255,.86);
+  --shadow:0 18px 40px -28px rgba(16,24,34,.34);
 }
 
 *{box-sizing:border-box}
@@ -77,15 +108,15 @@ body::before{
   content:"";
   position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
-    radial-gradient(820px 460px at 50% -10%, rgba(111,168,255,.13), transparent 68%),
-    radial-gradient(620px 340px at 88% 2%, rgba(63,185,138,.05), transparent 70%);
+    radial-gradient(820px 460px at 50% -10%, var(--glow-a), transparent 68%),
+    radial-gradient(620px 340px at 88% 2%, var(--glow-b), transparent 70%);
 }
 body::after{
   content:"";
   position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
   background-image:
-    linear-gradient(rgba(255,255,255,.021) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.021) 1px, transparent 1px);
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size:52px 52px;
   mask-image:radial-gradient(760px 420px at 50% 0%, #000 0%, transparent 72%);
   -webkit-mask-image:radial-gradient(760px 420px at 50% 0%, #000 0%, transparent 72%);
@@ -131,23 +162,81 @@ h1 em{font-style:normal; color:var(--accent); white-space:nowrap}
 
 /* ============ search ============ */
 
+/* The field is the main action on the page, so it gets a live gradient edge
+   and a soft halo instead of a flat border. */
+.search-shell{
+  position:relative; padding:1.6px; border-radius:17px;
+  background:linear-gradient(90deg,#6FA8FF,#56E0C6,#A78BFA,#6FA8FF);
+  background-size:300% 100%;
+  animation:flow 8s linear infinite;
+  box-shadow:0 0 34px -6px rgba(111,168,255,.34), var(--shadow);
+  transition:box-shadow .25s ease;
+}
+.search-shell:focus-within{box-shadow:0 0 46px -4px rgba(111,168,255,.5), var(--shadow)}
+@keyframes flow{to{background-position:300% 0}}
+
 .search{
-  display:flex; align-items:center; gap:10px;
-  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
-  padding:8px 8px 8px 16px;
-  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
-  box-shadow:0 18px 44px -30px rgba(0,0,0,.9);
+  display:flex; align-items:center; gap:12px;
+  background:var(--panel); border-radius:15.5px;
+  padding:9px 9px 9px 12px;
+  transition:background .18s ease;
 }
-.search:focus-within{
-  border-color:var(--accent-dim); background:var(--panel-2);
-  box-shadow:0 0 0 4px rgba(111,168,255,.09), 0 18px 44px -30px rgba(0,0,0,.9);
+.search:focus-within{background:var(--panel-2)}
+
+/* small chain badge, so the field reads as "paste a Solana address" at a glance */
+.chain{
+  flex:none; width:30px; height:30px; border-radius:50%;
+  display:grid; place-items:center; background:var(--panel-2); border:1px solid var(--line);
 }
-.search > svg{flex:none; width:17px; height:17px; color:var(--faint)}
+.chain svg{width:15px; height:15px; display:block}
+
 .search input{
   flex:1; min-width:0; background:none; border:none; outline:none; color:var(--text);
-  font-family:var(--f-mono); font-size:14px; padding:11px 0;
+  font-family:var(--f-mono); font-size:14.5px; padding:12px 0;
 }
 .search input::placeholder{color:var(--faint)}
+.search .mag{flex:none; width:17px; height:17px; color:var(--faint)}
+
+/* ============ recent strip ============ */
+
+.strip{display:flex; align-items:center; gap:12px; margin-top:16px; min-height:38px}
+.strip[hidden]{display:none}
+.strip-label{
+  flex:none; display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); white-space:nowrap;
+}
+.strip-label .pip{width:5px; height:5px; border-radius:50%; background:var(--accent); animation:beat 2.4s ease-in-out infinite}
+
+.strip-view{
+  flex:1; min-width:0; overflow:hidden;
+  mask-image:linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 34px), transparent);
+  -webkit-mask-image:linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 34px), transparent);
+}
+.strip-track{display:flex; gap:8px; width:max-content; animation:marquee 46s linear infinite}
+.strip-view:hover .strip-track{animation-play-state:paused}
+@keyframes marquee{from{transform:translateX(0)} to{transform:translateX(-50%)}}
+
+.chip-token{
+  display:inline-flex; align-items:center; gap:8px; flex:none;
+  padding:6px 12px 6px 7px; border-radius:100px;
+  background:var(--panel); border:1px solid var(--line); cursor:pointer;
+  transition:border-color .16s ease, background .16s ease, transform .16s ease;
+  font-family:var(--f-sans);
+}
+.chip-token:hover{background:var(--panel-2); border-color:var(--accent-dim); transform:translateY(-1px)}
+.chip-token img{width:20px; height:20px; border-radius:50%; flex:none; object-fit:cover; background:var(--panel-2)}
+.chip-token .ph{
+  width:20px; height:20px; border-radius:50%; flex:none; display:grid; place-items:center;
+  background:var(--panel-2); color:var(--faint); font-size:8px; font-weight:700;
+}
+.chip-token .cs{font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; max-width:12ch; overflow:hidden; text-overflow:ellipsis}
+.chip-token .cn{font-size:11px; color:var(--faint); white-space:nowrap; max-width:14ch; overflow:hidden; text-overflow:ellipsis}
+
+@media(max-width:560px){
+  .strip-label span:last-child{display:none}
+  .chip-token .cn{display:none}
+}
 
 button{
   font-family:var(--f-sans); font-weight:600; font-size:14px;
@@ -309,47 +398,157 @@ footer p:last-child{margin-bottom:0}
 }
 @keyframes sp{to{transform:rotate(360deg)}}
 
-/* ============ price ticker ============ */
+/* ============ theme toggle ============ */
 
-.ticker{
-  position:fixed; left:0; right:0; bottom:0; z-index:20; height:var(--ticker-h);
-  display:flex; align-items:center; justify-content:center; gap:0;
-  background:rgba(13,16,21,.82); border-top:1px solid var(--line);
+.theme{
+  position:fixed; top:16px; right:16px; z-index:30;
+  display:inline-flex; align-items:center; gap:0; padding:3px;
+  background:var(--bar-bg); border:1px solid var(--line); border-radius:100px;
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  font-family:var(--f-mono); font-size:12px;
-  overflow-x:auto; scrollbar-width:none;
+  box-shadow:var(--shadow);
 }
-.ticker::-webkit-scrollbar{display:none}
-.ticker-in{display:flex; align-items:center; gap:0; padding:0 14px; white-space:nowrap}
+.theme button{
+  all:unset; cursor:pointer; width:30px; height:30px; border-radius:100px;
+  display:grid; place-items:center; color:var(--faint);
+  transition:color .18s ease, background .18s ease;
+}
+.theme button:hover{color:var(--text)}
+/* clicks must always land on the button, never on the glyph inside it */
+.theme button svg{width:15px; height:15px; display:block; pointer-events:none}
+.theme button[aria-pressed="true"]{background:var(--panel-2); color:var(--accent)}
+.theme button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
-.tk{display:inline-flex; align-items:center; gap:8px; padding:0 15px; position:relative}
-.tk + .tk::before{content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:1px; height:13px; background:var(--line)}
-.tk .sym{color:var(--faint); letter-spacing:.09em; font-size:10.5px}
-.tk .px{color:var(--text); font-weight:500; font-variant-numeric:tabular-nums; transition:color .45s ease}
-.tk .px.up{color:var(--ok)} .tk .px.down{color:var(--bad)}
-.tk .ch{font-size:11px; font-variant-numeric:tabular-nums; color:var(--faint)}
-.tk .ch.up{color:var(--ok)} .tk .ch.down{color:var(--bad)}
+/* ============ bottom status bar ============ */
 
-.tk-live{display:inline-flex; align-items:center; gap:7px; padding:0 15px; color:var(--faint); font-size:10px; letter-spacing:.14em; text-transform:uppercase; position:relative}
-.tk-live::before{content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:1px; height:13px; background:var(--line)}
-.tk-live i{width:6px; height:6px; border-radius:50%; background:var(--faint); transition:background .3s ease}
-.tk-live.on i{background:var(--ok); animation:beat 2s ease-in-out infinite}
+.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:20; height:var(--ticker-h);
+  background:var(--bar-bg); border-top:1px solid var(--line);
+  backdrop-filter:blur(16px) saturate(140%); -webkit-backdrop-filter:blur(16px) saturate(140%);
+  font-family:var(--f-mono); font-size:12px;
+}
+/* hairline of colour along the top edge, fades out at both ends */
+.bar::before{
+  content:""; position:absolute; left:0; right:0; top:-1px; height:1px;
+  background:linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+  opacity:.5;
+}
+.bar-in{
+  height:100%; max-width:1400px; margin:0 auto; padding:0 14px;
+  display:flex; align-items:center; gap:14px;
+}
+
+/* -- left: the token currently on screen -- */
+.bar-token{display:flex; align-items:center; gap:9px; min-width:0; animation:slideIn .4s cubic-bezier(.2,.8,.25,1) both}
+@keyframes slideIn{from{opacity:0; transform:translateX(-8px)} to{opacity:1; transform:none}}
+.bar-token img{width:22px; height:22px; border-radius:50%; flex:none; background:var(--panel-2); object-fit:cover}
+.bar-token .fallback{
+  width:22px; height:22px; border-radius:50%; flex:none; display:grid; place-items:center;
+  background:var(--panel-2); color:var(--faint); font-size:9px; font-weight:700;
+}
+.bar-token .name{
+  color:var(--text); font-weight:500; font-size:12px; max-width:16ch;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.bar-token .tprice{color:var(--muted); font-variant-numeric:tabular-nums; font-size:11.5px}
+
+.links{display:flex; align-items:center; gap:2px; margin-left:2px}
+.links a{
+  width:26px; height:26px; border-radius:7px; display:grid; place-items:center;
+  color:var(--faint); border:1px solid transparent;
+  transition:color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.links a:hover{color:var(--text); background:var(--panel-2); border-color:var(--line); transform:translateY(-1px); text-decoration:none}
+.links a svg{width:13px; height:13px; display:block}
+.links a.x:hover{color:var(--text)}
+
+.bar-sep{flex:1; min-width:8px}
+
+/* -- right: market prices -- */
+.bar-mkt{display:flex; align-items:center; gap:0; min-width:0; overflow-x:auto; scrollbar-width:none}
+.bar-mkt::-webkit-scrollbar{display:none}
+
+.live{
+  display:inline-flex; align-items:center; gap:7px; padding-right:14px;
+  color:var(--faint); font-size:9.5px; letter-spacing:.15em; text-transform:uppercase;
+}
+.live i{width:6px; height:6px; border-radius:50%; background:var(--faint); transition:background .3s ease}
+.live.on i{background:var(--ok); animation:beat 2.2s ease-in-out infinite}
 @keyframes beat{0%,100%{box-shadow:0 0 0 0 rgba(63,185,138,.45)} 60%{box-shadow:0 0 0 5px rgba(63,185,138,0)}}
 
-@media(max-width:520px){
-  .tk{padding:0 11px; gap:6px}
+.tk{
+  display:inline-flex; align-items:center; gap:8px; padding:0 14px; position:relative;
+  white-space:nowrap; border-radius:8px; transition:background .16s ease;
+}
+.tk:hover{background:var(--panel-2)}
+.tk + .tk::before{content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:1px; height:14px; background:var(--line)}
+.tk .sym{
+  color:var(--faint); letter-spacing:.1em; font-size:9.5px; font-weight:700;
+  border:1px solid var(--line); border-radius:5px; padding:2px 5px;
+}
+.tk .px{color:var(--text); font-weight:500; font-variant-numeric:tabular-nums; transition:color .5s ease}
+.tk .px.up{color:var(--ok)} .tk .px.down{color:var(--bad)}
+.tk .ch{
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:11px; font-variant-numeric:tabular-nums; color:var(--faint);
+}
+.tk .ch.up{color:var(--ok)} .tk .ch.down{color:var(--bad)}
+.tk .ch .arw{font-size:8px; line-height:1}
+.tk .spark{width:46px; height:16px; display:block; flex:none; opacity:.9}
+.tk .spark path{fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; stroke:var(--faint)}
+.tk .spark.up path{stroke:var(--ok)} .tk .spark.down path{stroke:var(--bad)}
+.tk .spark .area{stroke:none; opacity:.13}
+.tk .spark.up .area{fill:var(--ok)} .tk .spark.down .area{fill:var(--bad)}
+
+@media(max-width:900px){
+  .tk .spark{display:none}
+  .bar-token .tprice{display:none}
+}
+@media(max-width:640px){
+  .live span{display:none}
+  .live{padding-right:10px}
+  .tk{padding:0 10px; gap:6px}
   .tk .ch{display:none}
-  .tk-live{display:none}
+  .bar-token .name{max-width:9ch}
+}
+@media(max-width:420px){
+  .tk .sym{border:none; padding:0}
+  .bar-in{gap:8px; padding:0 10px}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .spin, .sig.skel .k, .sig.skel .v, .sig.skel .n, .tk-live.on i, .under.busy .dot{animation:none}
-  .reveal, .fade-up, .mark, tbody tr{animation:none}
+  .spin, .sig.skel .k, .sig.skel .v, .sig.skel .n, .live.on i, .under.busy .dot{animation:none}
+  .reveal, .fade-up, .mark, tbody tr, .bar-token{animation:none}
   *{transition:none !important}
 }
 </style>
+
+<script>
+/* Applied before first paint so a light-theme visitor never sees a dark flash.
+   No stored choice means dark, which is the default look of the site. */
+(function(){
+  try{
+    if(localStorage.getItem("clearing.theme") === "light"){
+      document.documentElement.setAttribute("data-theme","light");
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
+
+<div class="theme" role="group" aria-label="Colour theme">
+  <button id="themeDark" type="button" title="Dark" aria-pressed="true" aria-label="Dark theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+    </svg>
+  </button>
+  <button id="themeLight" type="button" title="Light" aria-pressed="false" aria-label="Light theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+  </button>
+</div>
 
 <div class="wrap">
 
@@ -364,19 +563,40 @@ footer p:last-child{margin-bottom:0}
   </header>
 
   <div class="fade-up d3">
-    <div class="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
-      </svg>
-      <input id="ca" type="text" spellcheck="false" autocapitalize="off" autocomplete="off"
-             aria-label="Solana contract address"
-             placeholder="Paste a contract address and press Enter">
-      <button id="go">Analyze</button>
+    <div class="search-shell">
+      <div class="search">
+        <span class="chain" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="cg" x1="0" y1="24" x2="24" y2="0">
+                <stop offset="0" stop-color="#22D1C3"/><stop offset="1" stop-color="#9B6BFF"/>
+              </linearGradient>
+            </defs>
+            <g fill="url(#cg)">
+              <path d="M6.4 5.2h13.1c.5 0 .8.6.4 1l-2 2c-.2.2-.4.3-.6.3H4.2c-.5 0-.8-.6-.4-1l2-2c.2-.2.4-.3.6-.3z"/>
+              <path d="M6.4 10.4h13.1c.5 0 .8.6.4 1l-2 2c-.2.2-.4.3-.6.3H4.2c-.5 0-.8-.6-.4-1l2-2c.2-.2.4-.3.6-.3z"/>
+              <path d="M6.4 15.6h13.1c.5 0 .8.6.4 1l-2 2c-.2.2-.4.3-.6.3H4.2c-.5 0-.8-.6-.4-1l2-2c.2-.2.4-.3.6-.3z"/>
+            </g>
+          </svg>
+        </span>
+        <input id="ca" type="text" spellcheck="false" autocapitalize="off" autocomplete="off"
+               aria-label="Solana contract address"
+               placeholder="Paste a contract address and press Enter">
+        <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+        </svg>
+        <button id="go">Analyze</button>
+      </div>
     </div>
 
     <p class="under" id="status">
       <span class="dot"></span><span id="statusText">No key, no account, no wallet connection. Just paste an address.</span>
     </p>
+
+    <div class="strip" id="strip" hidden>
+      <span class="strip-label"><span class="pip"></span><span id="stripLabel">Live on Solana</span></span>
+      <div class="strip-view"><div class="strip-track" id="stripTrack"></div></div>
+    </div>
   </div>
 
   <div class="results">
@@ -479,12 +699,30 @@ footer p:last-child{margin-bottom:0}
   </div>
 </div>
 
-<div class="ticker" id="ticker" aria-label="Live prices">
-  <div class="ticker-in">
-    <span class="tk" id="tk-BTC"><span class="sym">BTC</span><span class="px">—</span><span class="ch">—</span></span>
-    <span class="tk" id="tk-ETH"><span class="sym">ETH</span><span class="px">—</span><span class="ch">—</span></span>
-    <span class="tk" id="tk-SOL"><span class="sym">SOL</span><span class="px">—</span><span class="ch">—</span></span>
-    <span class="tk-live" id="tkLive"><i></i>live</span>
+<div class="bar" id="bar">
+  <div class="bar-in">
+
+    <div class="bar-token" id="barToken" hidden></div>
+
+    <div class="bar-sep"></div>
+
+    <div class="bar-mkt">
+      <span class="live" id="tkLive"><i></i><span>live</span></span>
+
+      <span class="tk" id="tk-BTC">
+        <span class="sym">BTC</span><span class="px">—</span><span class="ch">—</span>
+        <svg class="spark" viewBox="0 0 46 16" preserveAspectRatio="none" aria-hidden="true"><path class="area"></path><path class="ln"></path></svg>
+      </span>
+      <span class="tk" id="tk-ETH">
+        <span class="sym">ETH</span><span class="px">—</span><span class="ch">—</span>
+        <svg class="spark" viewBox="0 0 46 16" preserveAspectRatio="none" aria-hidden="true"><path class="area"></path><path class="ln"></path></svg>
+      </span>
+      <span class="tk" id="tk-SOL">
+        <span class="sym">SOL</span><span class="px">—</span><span class="ch">—</span>
+        <svg class="spark" viewBox="0 0 46 16" preserveAspectRatio="none" aria-hidden="true"><path class="area"></path><path class="ln"></path></svg>
+      </span>
+    </div>
+
   </div>
 </div>
 
@@ -651,10 +889,20 @@ footer p:last-child{margin-bottom:0}
 
     var valEl = scoreWrap.querySelector(".num");
     var barEl = scoreWrap.querySelector(".bar");
-    scoreWrap.querySelector(".out").textContent =
-      checksDone === checksTotal ? "score" : checksDone + "/" + checksTotal + " checks";
+    var partial = checksDone < checksTotal;
 
-    countTo(valEl, score, "", 0);
+    /* A score out of 100 is only honest when every check actually ran.
+       While some are missing, the ring reports coverage instead — otherwise
+       a token with two passed checks would show a reassuring 100. */
+    if(partial){
+      valEl.style.fontSize = "19px";
+      valEl.textContent = checksDone + "/" + checksTotal;
+      scoreWrap.querySelector(".out").textContent = "checks run";
+      score = (checksDone / checksTotal) * 100;
+    } else {
+      scoreWrap.querySelector(".out").textContent = "score";
+      countTo(valEl, score, "", 0);
+    }
     /* forced reflow so the CSS transition still runs from the full offset,
        without depending on requestAnimationFrame firing */
     void barEl.getBoundingClientRect();
@@ -698,6 +946,7 @@ footer p:last-child{margin-bottom:0}
     busy(true);
     skeleton();
     setStatus("reading the mint account…", "busy");
+    document.dispatchEvent(new CustomEvent("clearing:token", {detail:{mint:mint}}));
 
     var info;
 
@@ -932,8 +1181,42 @@ footer p:last-child{margin-bottom:0}
 
 
 /* ============================================================
-   Bottom price bar. Binance public websocket, no key, no account.
-   Falls back to a REST poll if the socket cannot be opened.
+   Colour theme. Dark is the default; the choice is remembered.
+   ============================================================ */
+(function(){
+  "use strict";
+  var root = document.documentElement;
+  var dark = document.getElementById("themeDark");
+  var light = document.getElementById("themeLight");
+
+  function apply(theme, persist){
+    if(theme === "light"){ root.setAttribute("data-theme","light"); }
+    else { root.removeAttribute("data-theme"); }
+    dark.setAttribute("aria-pressed", String(theme !== "light"));
+    light.setAttribute("aria-pressed", String(theme === "light"));
+    if(persist){ try{ localStorage.setItem("clearing.theme", theme); }catch(e){} }
+  }
+
+  var stored = "dark";
+  try{ if(localStorage.getItem("clearing.theme") === "light") stored = "light"; }catch(e){}
+  apply(stored, false);
+
+  dark.addEventListener("click", function(){ apply("dark", true); });
+  light.addEventListener("click", function(){ apply("light", true); });
+})();
+
+
+/* ============================================================
+   Bottom status bar.
+
+   Right side: BTC / ETH / SOL from Binance's public websocket — no key,
+   no account — with a REST poll as fallback and 15-minute klines drawn
+   as sparklines.
+
+   Left side: whichever token is being analysed. Name, image, price and
+   social links come from DexScreener's public API. When a token lists no
+   X account there, the button falls back to an X search on the address
+   rather than pointing somewhere wrong.
    ============================================================ */
 (function(){
   "use strict";
@@ -945,8 +1228,11 @@ footer p:last-child{margin-bottom:0}
   ];
 
   var live = document.getElementById("tkLive");
+  var barToken = document.getElementById("barToken");
   var last = {};
   var ws = null, retry = 0, pollTimer = null;
+
+  /* ---------------- market prices ---------------- */
 
   function money(n, dec){
     return "$" + n.toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -965,14 +1251,48 @@ footer p:last-child{margin-bottom:0}
       pxEl.classList.remove("up","down");
       void pxEl.offsetWidth;
       pxEl.classList.add(price > prev ? "up" : "down");
-      setTimeout(function(){ pxEl.classList.remove("up","down"); }, 700);
+      setTimeout(function(){ pxEl.classList.remove("up","down"); }, 800);
     }
     last[sym] = price;
 
     var c = Number(changePct);
-    chEl.textContent = (c >= 0 ? "+" : "") + c.toFixed(2) + "%";
-    chEl.classList.toggle("up", c >= 0);
-    chEl.classList.toggle("down", c < 0);
+    var up = c >= 0;
+    /* the arrow already carries the direction, so the number stays unsigned */
+    chEl.innerHTML = '<span class="arw">' + (up ? "▲" : "▼") + '</span>' +
+                     Math.abs(c).toFixed(2) + "%";
+    chEl.classList.toggle("up", up);
+    chEl.classList.toggle("down", !up);
+
+    var spark = el.querySelector(".spark");
+    spark.classList.toggle("up", up);
+    spark.classList.toggle("down", !up);
+  }
+
+  /* Turn a list of closes into a line and a soft area beneath it. */
+  function drawSpark(sym, closes){
+    var el = document.getElementById("tk-" + sym);
+    if(!el || closes.length < 2) return;
+    var svg = el.querySelector(".spark"), W = 46, H = 16;
+    var min = Math.min.apply(null, closes), max = Math.max.apply(null, closes);
+    var span = (max - min) || 1;
+
+    var d = "";
+    for(var i=0;i<closes.length;i++){
+      var x = (i / (closes.length - 1)) * W;
+      var y = H - 1.5 - ((closes[i] - min) / span) * (H - 3);
+      d += (i ? "L" : "M") + x.toFixed(2) + " " + y.toFixed(2) + " ";
+    }
+    svg.querySelector(".ln").setAttribute("d", d.trim());
+    svg.querySelector(".area").setAttribute("d", d.trim() + " L" + W + " " + H + " L0 " + H + " Z");
+  }
+
+  function loadSparks(){
+    PAIRS.forEach(function(p){
+      fetch("https://api.binance.com/api/v3/klines?symbol=" + p.stream.toUpperCase() + "&interval=15m&limit=32")
+        .then(function(r){ return r.json(); })
+        .then(function(k){ drawSpark(p.sym, k.map(function(c){ return parseFloat(c[4]); })); })
+        .catch(function(){});
+    });
   }
 
   function setLive(on){ live && live.classList.toggle("on", !!on); }
@@ -1027,9 +1347,192 @@ footer p:last-child{margin-bottom:0}
     if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
   }
 
-  /* First paint from REST so the bar is never empty, then live socket. */
+  /* ---------------- token segment ---------------- */
+
+  var ICONS = {
+    x: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    tg: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.9 19c-.2 1-.8 1.3-1.7.8l-4.6-3.4-2.2 2.1c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.3-.1-.5-.6-.2L7 11.1 2.5 9.7c-1-.3-1-1 .2-1.5l17.8-6.9c.8-.3 1.6.2 1.4 1z"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><rect x="5" y="11" width="3.4" height="7" rx="1"/><rect x="10.3" y="6" width="3.4" height="12" rx="1"/><rect x="15.6" y="13" width="3.4" height="5" rx="1"/></svg>',
+    scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 10.5 13.5"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>'
+  };
+
+  function link(href, title, icon, cls){
+    return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" title="' +
+           title + '" aria-label="' + title + '" class="' + (cls || "") + '">' + icon + '</a>';
+  }
+
+  function tokenPrice(p){
+    var n = parseFloat(p);
+    if(!isFinite(n)) return "";
+    if(n >= 1) return "$" + n.toLocaleString("en-US", {maximumFractionDigits:2});
+    if(n >= 0.01) return "$" + n.toFixed(4);
+    return "$" + n.toPrecision(3);
+  }
+
+  function showToken(mint){
+    barToken.hidden = true;
+    barToken.innerHTML = "";
+
+    fetch("https://api.dexscreener.com/latest/dex/tokens/" + mint)
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var pairs = (j && j.pairs) || [];
+        if(!pairs.length) return renderToken(mint, null);
+        /* deepest pool is the most representative one */
+        pairs.sort(function(a,b){
+          return ((b.liquidity && b.liquidity.usd) || 0) - ((a.liquidity && a.liquidity.usd) || 0);
+        });
+        renderToken(mint, pairs[0]);
+      })
+      .catch(function(){ renderToken(mint, null); });
+  }
+
+  function renderToken(mint, pair){
+    var info = (pair && pair.info) || {};
+    var base = (pair && pair.baseToken) || {};
+    var socials = info.socials || [];
+    var name = base.name || base.symbol || (mint.slice(0,4) + "…" + mint.slice(-4));
+    var img = info.imageUrl;
+
+    var twitter = socials.filter(function(s){ return /twitter|^x$/i.test(s.type || ""); })[0];
+    var tg = socials.filter(function(s){ return /telegram/i.test(s.type || ""); })[0];
+
+    var head = img
+      ? '<img src="' + img + '" alt="" loading="lazy" onerror="this.remove()">'
+      : '<span class="fallback">' + (base.symbol || "?").slice(0,3).toUpperCase() + '</span>';
+
+    var links = "";
+    links += twitter
+      ? link(twitter.url, "Official X account", ICONS.x, "x")
+      : link("https://x.com/search?q=" + encodeURIComponent(mint) + "&f=live",
+             "No X account listed — search this address on X", ICONS.x, "x");
+    if(tg) links += link(tg.url, "Telegram", ICONS.tg);
+    if(pair) links += link(pair.url, "DexScreener chart", ICONS.chart);
+    links += link("https://solscan.io/token/" + mint, "Solscan", ICONS.scan);
+
+    barToken.innerHTML =
+      head +
+      '<span class="name">' + name.replace(/[<>&]/g, "") + '</span>' +
+      (pair && pair.priceUsd ? '<span class="tprice">' + tokenPrice(pair.priceUsd) + '</span>' : "") +
+      '<span class="links">' + links + '</span>';
+
+    barToken.hidden = false;
+    remember(mint, base.symbol || "", name, img);
+  }
+
+  /* ---------------- recent strip ---------------- */
+
+  var strip = document.getElementById("strip");
+  var stripTrack = document.getElementById("stripTrack");
+  var stripLabel = document.getElementById("stripLabel");
+  var KEY = "clearing.recent";
+
+  function readRecent(){
+    try{
+      var v = JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(v) ? v : [];
+    }catch(e){ return []; }
+  }
+
+  function remember(mint, sym, name, img){
+    var list = readRecent().filter(function(t){ return t.mint !== mint; });
+    list.unshift({mint:mint, sym:sym || name, name:name, img:img || ""});
+    list = list.slice(0, 14);
+    try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(e){}
+    buildStrip();
+  }
+
+  function chip(t){
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = "chip-token";
+    el.title = t.name + " — " + t.mint;
+    el.innerHTML =
+      (t.img ? '<img src="' + t.img + '" alt="" loading="lazy" onerror="this.remove()">'
+             : '<span class="ph">' + (t.sym || "?").slice(0,3).toUpperCase() + '</span>') +
+      '<span class="cs"></span><span class="cn"></span>';
+    el.querySelector(".cs").textContent = (t.sym || "?").toUpperCase();
+    el.querySelector(".cn").textContent = t.name || "";
+    el.addEventListener("click", function(){
+      var input = document.getElementById("ca");
+      input.value = t.mint;
+      input.focus();
+      document.getElementById("go").click();
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+    return el;
+  }
+
+  /* Two states, never mixed: what this visitor actually checked, or a live
+     feed of Solana tokens. Nothing here claims to be "verified by others". */
+  function paintStrip(items, label){
+    if(!items.length){ strip.hidden = true; return; }
+    stripLabel.textContent = label;
+    stripTrack.innerHTML = "";
+    /* the track holds the list twice so the loop has no visible seam */
+    for(var pass=0; pass<2; pass++){
+      items.forEach(function(t){
+        var c = chip(t);
+        if(pass === 1) c.setAttribute("aria-hidden", "true");
+        stripTrack.appendChild(c);
+      });
+    }
+    /* keep the speed roughly constant whatever the number of chips */
+    stripTrack.style.animationDuration = Math.max(24, items.length * 4.5) + "s";
+    strip.hidden = false;
+  }
+
+  function buildStrip(){
+    var recent = readRecent();
+    if(recent.length >= 3){
+      paintStrip(recent, "Your recent checks");
+      return;
+    }
+    loadFeed();
+  }
+
+  var feedLoaded = false;
+  function loadFeed(){
+    if(feedLoaded) return;
+    feedLoaded = true;
+
+    fetch("https://api.dexscreener.com/token-boosts/latest/v1")
+      .then(function(r){ return r.json(); })
+      .then(function(list){
+        var mints = (Array.isArray(list) ? list : [])
+          .filter(function(x){ return x.chainId === "solana" && x.tokenAddress; })
+          .map(function(x){ return x.tokenAddress; })
+          .slice(0, 18);
+        if(!mints.length) throw new Error("empty");
+        return fetch("https://api.dexscreener.com/latest/dex/tokens/" + mints.join(","))
+          .then(function(r){ return r.json(); })
+          .then(function(j){
+            var seen = {}, out = [];
+            (j.pairs || []).forEach(function(p){
+              var b = p.baseToken || {};
+              if(!b.address || seen[b.address] || mints.indexOf(b.address) === -1) return;
+              seen[b.address] = 1;
+              out.push({mint:b.address, sym:b.symbol, name:b.name, img:(p.info||{}).imageUrl || ""});
+            });
+            paintStrip(out, "Live on Solana");
+          });
+      })
+      .catch(function(){ strip.hidden = true; });
+  }
+
+  document.addEventListener("clearing:token", function(e){
+    var mint = e.detail && e.detail.mint;
+    if(mint) showToken(mint);
+    else { barToken.hidden = true; barToken.innerHTML = ""; }
+  });
+
+  /* ---------------- boot ---------------- */
+
   pollOnce();
+  loadSparks();
   connect();
+  buildStrip();
+  setInterval(loadSparks, 300000);
 
   document.addEventListener("visibilitychange", function(){
     if(document.visibilityState === "visible" && (!ws || ws.readyState > 1)){
