@@ -98,6 +98,11 @@
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
 
+/* Any rule setting display: flex/grid/block beats the browser's own rule for
+   the hidden attribute, so elements toggled with .hidden = true stayed on
+   screen. One declaration settles it for the whole page. */
+[hidden]{display:none !important}
+
 body{
   margin:0;
   padding-bottom:var(--ticker-h);
@@ -825,6 +830,55 @@ tbody tr:hover td{background:var(--panel-3)}
   background:linear-gradient(135deg,#9945FF,#6FA8FF); color:#0A0C10;
   font-size:11px; font-weight:700;
 }
+
+/* twelve generated avatar looks — no upload, nothing to host or moderate */
+.av0{background:linear-gradient(135deg,#9945FF,#6FA8FF)!important}
+.av1{background:linear-gradient(135deg,#14F195,#6FA8FF)!important}
+.av2{background:linear-gradient(135deg,#FF7A45,#FFC24B)!important}
+.av3{background:linear-gradient(135deg,#F2618C,#9945FF)!important}
+.av4{background:linear-gradient(135deg,#4BE0D0,#2563EB)!important}
+.av5{background:linear-gradient(135deg,#FFD24B,#FF7A45)!important}
+.av6{background:linear-gradient(135deg,#7B61FF,#F2618C)!important}
+.av7{background:linear-gradient(135deg,#3FB98A,#14F195)!important}
+.av8{background:linear-gradient(135deg,#6FA8FF,#B9A0FF)!important}
+.av9{background:linear-gradient(135deg,#E05A4E,#FFC24B)!important}
+.av10{background:linear-gradient(135deg,#00D1B2,#7B61FF)!important}
+.av11{background:linear-gradient(135deg,#A0AEC0,#4A5568)!important}
+
+.avpick{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px}
+.avpick button{
+  all:unset; cursor:pointer; width:34px; height:34px; border-radius:50%;
+  box-shadow:0 0 0 2px transparent; transition:box-shadow .16s ease, transform .16s ease;
+}
+.avpick button:hover{transform:translateY(-2px)}
+.avpick button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+
+/* unread dot on the Social tab */
+.tab .dot2{
+  display:inline-block; width:6px; height:6px; border-radius:50%; margin-left:6px;
+  background:var(--accent); vertical-align:1px;
+  animation:beat 2.2s ease-in-out infinite;
+}
+
+/* follow button */
+.follow{
+  all:unset; cursor:pointer; font-family:var(--f-sans); font-weight:600; font-size:12.5px;
+  padding:7px 15px; border-radius:100px; border:1px solid var(--accent);
+  background:var(--accent); color:#0A0C10; transition:background .16s ease, color .16s ease;
+}
+.follow.on{background:transparent; color:var(--muted); border-color:var(--line)}
+.follow.on:hover{color:var(--bad); border-color:var(--bad)}
+.post .who3{cursor:pointer}
+.post .who3:hover{text-decoration:underline}
+
+.filters{display:flex; gap:6px; margin-bottom:16px}
+.filters[hidden]{display:none}
+.filt{
+  all:unset; cursor:pointer; padding:7px 14px; border-radius:100px;
+  font-size:13px; font-weight:500; color:var(--muted); border:1px solid transparent;
+}
+.filt:hover{color:var(--text); background:var(--panel-2)}
+.filt[aria-selected="true"]{color:var(--text); background:var(--panel-2); border-color:var(--line); font-weight:600}
 .who-btn .lbl{font-size:13px; font-weight:600; color:var(--text); max-width:12ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 @media(max-width:820px){ .who-btn .lbl{display:none} .who-btn{padding:5px} }
 
@@ -916,7 +970,8 @@ tbody tr:hover td{background:var(--panel-3)}
   animation:rise .32s cubic-bezier(.22,.9,.3,1) both;
 }
 .post .top2{display:flex; align-items:center; gap:9px; margin-bottom:7px}
-.post .av2{
+/* named .pav, not .av2: the palette classes are .av0…av11 and would clash */
+.post .pav{
   width:26px; height:26px; border-radius:50%; flex:none; display:grid; place-items:center;
   background:linear-gradient(135deg,#9945FF,#6FA8FF); color:#0A0C10; font-size:11px; font-weight:700;
 }
@@ -1335,6 +1390,10 @@ footer p:last-child{margin-bottom:0}
       </div>
 
       <div id="composerWrap"></div>
+      <div class="filters" id="feedFilters" hidden>
+        <button class="filt" id="filtAll" type="button" aria-selected="true">Everyone</button>
+        <button class="filt" id="filtFollowing" type="button" aria-selected="false">Following</button>
+      </div>
       <div id="feedList"><div class="empty">Loading the feed…</div></div>
     </div>
   </div>
@@ -2813,15 +2872,51 @@ footer p:last-child{margin-bottom:0}
     catch(e){ return ""; }
   }
 
+  function avClass(n){ return "av av" + (typeof n === "number" ? n : 0); }
+
   function paintWho(){
     if(me){
       whoAv.textContent = initial(me.name);
+      whoAv.className = avClass(me.av);
       whoLbl.textContent = me.name;
     } else {
       whoAv.textContent = "?";
+      whoAv.className = "av";
       whoLbl.textContent = "Sign in";
     }
     paintComposer();
+    paintFilters();
+  }
+
+  /* A dot on the Social tab when people you follow posted since your last
+     visit. No push notifications, no permission prompt — just a mark. */
+  function paintUnread(posts){
+    var tab = document.getElementById("tab-social");
+    if(!tab) return;
+    var old = tab.querySelector(".dot2");
+    if(old) old.remove();
+    if(!me || !posts) return;
+
+    var follows = me.following || [];
+    var fresh = posts.filter(function(p){
+      return p.at > (me.lastSeen || 0) && p.name !== me.name && follows.indexOf(p.name) !== -1;
+    });
+    if(!fresh.length) return;
+
+    var dot = document.createElement("span");
+    dot.className = "dot2";
+    dot.title = fresh.length + " new post" + (fresh.length > 1 ? "s" : "") + " from people you follow";
+    tab.appendChild(dot);
+  }
+
+  function markSeen(){
+    if(!me) return;
+    api({action:"seen", token:token}).then(function(j){
+      me.lastSeen = j.lastSeen;
+      var tab = document.getElementById("tab-social");
+      var dot = tab && tab.querySelector(".dot2");
+      if(dot) dot.remove();
+    }).catch(function(){});
   }
 
   function open(html){
@@ -2923,15 +3018,25 @@ footer p:last-child{margin-bottom:0}
   }
 
   function profileSheet(){
+    var swatches = "";
+    for(var i=0;i<12;i++){
+      swatches += '<button type="button" class="av' + i + '" data-av="' + i +
+                  '" aria-pressed="' + (me.av === i) + '" aria-label="Avatar ' + (i+1) + '"></button>';
+    }
+
     open(
       '<h3 id="sheetTitle">Your profile</h3>' +
       '<p class="sheet-err" id="sheetErr"></p>' +
       '<div class="pcard">' +
-        '<span class="big">' + initial(me.name) + '</span>' +
+        '<span class="big ' + avClass(me.av) + '">' + initial(me.name) + '</span>' +
         '<div><div class="nm2"><span class="h">' + me.name + '</span>' +
         (me.dev ? '<span class="devtag">DEV</span>' : '') + '</div>' +
-        '<div class="meta">Joined ' + dateStr(me.created) + '</div></div>' +
+        '<div class="meta">Joined ' + dateStr(me.created) + ' · ' +
+          me.followers + ' follower' + (me.followers === 1 ? "" : "s") + ' · ' +
+          (me.following || []).length + ' following</div></div>' +
       '</div>' +
+      '<label>Avatar</label>' +
+      '<div class="avpick" id="pfAv">' + swatches + '</div>' +
       '<label for="pfX">X handle</label>' +
       '<input id="pfX" type="text" autocomplete="off" spellcheck="false" maxlength="20" placeholder="without the @" value="' +
         (me.x || "").replace(/"/g, "") + '">' +
@@ -2940,6 +3045,21 @@ footer p:last-child{margin-bottom:0}
         '<button class="linkish" id="pfOut" type="button">Sign out</button>' +
       '</div>'
     );
+
+    document.getElementById("pfAv").addEventListener("click", function(e){
+      var b = e.target.closest("button[data-av]");
+      if(!b) return;
+      var n = Number(b.getAttribute("data-av"));
+      api({action:"avatar", token:token, av:n}).then(function(j){
+        me = j.user;
+        [].forEach.call(this.querySelectorAll("button[data-av]"), function(x){
+          x.setAttribute("aria-pressed", String(Number(x.getAttribute("data-av")) === me.av));
+        });
+        var big = document.querySelector(".pcard .big");
+        if(big) big.className = "big " + avClass(me.av);
+        paintWho();
+      }.bind(this)).catch(function(e2){ err(e2.message); });
+    });
 
     document.getElementById("pfSave").addEventListener("click", function(){
       var btn = this; btn.disabled = true;
@@ -2957,6 +3077,47 @@ footer p:last-child{margin-bottom:0}
   whoBtn.addEventListener("click", function(){
     if(me) profileSheet(); else signInForm();
   });
+
+  /* someone else's profile, with the follow button */
+  function otherSheet(name){
+    api({action:"profile", token:token, name:name}).then(function(j){
+      var u = j.profile;
+      open(
+        '<h3 id="sheetTitle">Profile</h3>' +
+        '<p class="sheet-err" id="sheetErr"></p>' +
+        '<div class="pcard">' +
+          '<span class="big ' + avClass(u.av) + '">' + initial(u.name) + '</span>' +
+          '<div><div class="nm2"><span class="h">' + u.name + '</span>' +
+          (u.dev ? '<span class="devtag">DEV</span>' : '') + '</div>' +
+          '<div class="meta">Joined ' + dateStr(u.created) + ' · ' +
+            '<span id="ofC">' + u.followers + '</span> follower' + (u.followers === 1 ? "" : "s") +
+            ' · ' + u.followsCount + ' following</div></div>' +
+        '</div>' +
+        (u.x ? '<p class="sub2">On X as @' + u.x.replace(/[<>&"]/g, "") + '</p>' : '') +
+        (me && me.name !== u.name
+          ? '<div class="sheet-row"><button class="follow' + (u.youFollow ? " on" : "") + '" id="ofBtn" type="button">' +
+            (u.youFollow ? "Following" : "Follow") + '</button></div>'
+          : '')
+      );
+
+      var btn = document.getElementById("ofBtn");
+      if(!btn) return;
+      btn.addEventListener("click", function(){
+        var following = btn.classList.contains("on");
+        btn.disabled = true;
+        api({action: following ? "unfollow" : "follow", token:token, name:u.name})
+          .then(function(j2){
+            me = j2.user;
+            btn.classList.toggle("on", j2.profile.youFollow);
+            btn.textContent = j2.profile.youFollow ? "Following" : "Follow";
+            document.getElementById("ofC").textContent = j2.profile.followers;
+            btn.disabled = false;
+            paintFilters();
+          })
+          .catch(function(e){ err(e.message); btn.disabled = false; });
+      });
+    }).catch(function(e){ alert(e.message); });
+  }
 
   /* ---------------- feed ---------------- */
 
@@ -3028,23 +3189,61 @@ footer p:last-child{margin-bottom:0}
     return row;
   }
 
+  var lastPosts = [];
+  var mode = "all";
+
+  function paintFilters(){
+    var box = document.getElementById("feedFilters");
+    if(!box) return;
+    box.hidden = !me;
+    if(!me) { mode = "all"; return; }
+    document.getElementById("filtAll").setAttribute("aria-selected", String(mode === "all"));
+    document.getElementById("filtFollowing").setAttribute("aria-selected", String(mode === "following"));
+  }
+
+  ["All", "Following"].forEach(function(which){
+    var id = which === "All" ? "filtAll" : "filtFollowing";
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener("click", function(){
+      mode = which === "All" ? "all" : "following";
+      paintFilters();
+      paintPosts(lastPosts);
+    });
+  });
+
   function paintPosts(posts){
     if(!list) return;
-    if(!posts.length){
-      list.innerHTML = '<div class="empty">Nothing posted yet.</div>';
+    lastPosts = posts || [];
+    paintUnread(lastPosts);
+
+    var shown = lastPosts;
+    if(mode === "following" && me){
+      var f = me.following || [];
+      shown = lastPosts.filter(function(p){ return p.name === me.name || f.indexOf(p.name) !== -1; });
+    }
+
+    if(!shown.length){
+      list.innerHTML = '<div class="empty">' +
+        (mode === "following" ? "Nobody you follow has posted yet." : "Nothing posted yet.") +
+        '</div>';
       return;
     }
     list.innerHTML = "";
-    posts.forEach(function(p, i){
+    shown.forEach(function(p, i){
       var el = document.createElement("div");
       el.className = "post";
       el.style.animationDelay = Math.min(i * 18, 300) + "ms";
       el.innerHTML =
-        '<div class="top2"><span class="av2"></span><span class="who3"></span>' +
+        '<div class="top2"><span class="pav"></span><span class="who3"></span>' +
         (p.dev ? '<span class="devtag">DEV</span>' : '') +
         '<span class="at"></span></div><div class="body2"></div>';
-      el.querySelector(".av2").textContent = initial(p.name);
-      el.querySelector(".who3").textContent = p.name;
+      el.querySelector(".pav").textContent = initial(p.name);
+      el.querySelector(".pav").className = "pav av" + (typeof p.av === "number" ? p.av : 0);
+      var who = el.querySelector(".who3");
+      who.textContent = p.name;
+      who.title = "See " + p.name + "'s profile";
+      who.addEventListener("click", function(){ otherSheet(p.name); });
       el.querySelector(".at").textContent = ago(p.at);
       /* textContent, never innerHTML: a post is text and only text */
       el.querySelector(".body2").textContent = p.text;
@@ -3069,7 +3268,11 @@ footer p:last-child{margin-bottom:0}
     if(!list) return;
     fetch("/api/social", {cache:"no-store"})
       .then(function(r){ return r.json(); })
-      .then(function(j){ paintPosts((j && j.posts) || []); })
+      .then(function(j){
+        paintPosts((j && j.posts) || []);
+        /* opening the feed is what clears the dot */
+        setTimeout(markSeen, 1200);
+      })
       .catch(function(){ list.innerHTML = '<div class="empty">The feed did not answer. Try again in a minute.</div>'; });
   }
 
@@ -3083,7 +3286,13 @@ footer p:last-child{margin-bottom:0}
   /* restore the session if the stored token is still valid */
   if(token){
     api({action:"me", token:token})
-      .then(function(j){ me = j.user; paintWho(); })
+      .then(function(j){
+        me = j.user;
+        paintWho();
+        /* one quiet fetch so the unread dot can appear from any tab */
+        return fetch("/api/social", {cache:"no-store"}).then(function(r){ return r.json(); });
+      })
+      .then(function(j){ if(j) paintUnread((j && j.posts) || []); })
       .catch(function(){ token = ""; try{ localStorage.removeItem(KEY); }catch(e){} paintWho(); });
   } else {
     paintWho();

@@ -75,6 +75,24 @@ function publicUser(u) {
     created: u.created,
     x: u.x || "",
     dev: u.key === devName(),
+    av: typeof u.av === "number" ? u.av : 0,
+    following: u.following || [],
+    followers: (u.followers || []).length,
+    lastSeen: u.lastSeen || 0,
+  };
+}
+
+// profil réduit, pour afficher quelqu'un d'autre
+function otherUser(u, viewer) {
+  return {
+    name: u.name,
+    created: u.created,
+    x: u.x || "",
+    dev: u.key === devName(),
+    av: typeof u.av === "number" ? u.av : 0,
+    followers: (u.followers || []).length,
+    followsCount: (u.following || []).length,
+    youFollow: viewer ? (viewer.following || []).indexOf(u.name) !== -1 : false,
   };
 }
 
@@ -145,7 +163,21 @@ export default async (req) => {
       created: Date.now(),
       x: "",
       lastPost: 0,
+      av: crypto.randomInt(0, 12),
+      following: [],
+      followers: [],
+      lastSeen: Date.now(),
     };
+
+    // tout nouveau compte suit le compte du dev, s'il existe déjà
+    const dev = devName() ? await users.get(devName(), { type: "json" }) : null;
+    if (dev && dev.key !== key) {
+      user.following.push(dev.name);
+      dev.followers = dev.followers || [];
+      if (dev.followers.indexOf(user.name) === -1) dev.followers.push(user.name);
+      await users.setJSON(dev.key, dev);
+    }
+
     await users.setJSON(key, user);
 
     return json({ token: makeToken(key), user: publicUser(user) });
@@ -202,6 +234,7 @@ export default async (req) => {
       id: crypto.randomUUID(),
       name: user.name,
       dev: user.key === devName(),
+      av: typeof user.av === "number" ? user.av : 0,
       text,
       at: Date.now(),
       likes: [],
@@ -213,6 +246,64 @@ export default async (req) => {
     await users.setJSON(user.key, user);
 
     return json({ ok: true, posts: list.slice(0, MAX_POSTS) });
+  }
+
+  // ---- avatar : un motif généré, pas de fichier à héberger ni à modérer ----
+  if (action === "avatar") {
+    const user = await current();
+    if (!user) return json({ error: "Not signed in" }, 401);
+    const n = Number(body.av);
+    user.av = Number.isInteger(n) && n >= 0 && n < 12 ? n : crypto.randomInt(0, 12);
+    await users.setJSON(user.key, user);
+    return json({ user: publicUser(user) });
+  }
+
+  // ---- profil de quelqu'un d'autre ----
+  if (action === "profile") {
+    const viewer = await current();
+    const key = String(body.name || "").trim().toLowerCase();
+    const who = await users.get(key, { type: "json" });
+    if (!who) return json({ error: "No such account" }, 404);
+    return json({ profile: otherUser(who, viewer) });
+  }
+
+  // ---- suivre / ne plus suivre ----
+  if (action === "follow" || action === "unfollow") {
+    const user = await current();
+    if (!user) return json({ error: "Not signed in" }, 401);
+
+    const key = String(body.name || "").trim().toLowerCase();
+    if (key === user.key) return json({ error: "You cannot follow yourself." }, 400);
+
+    const who = await users.get(key, { type: "json" });
+    if (!who) return json({ error: "No such account" }, 404);
+
+    user.following = user.following || [];
+    who.followers = who.followers || [];
+
+    const a = user.following.indexOf(who.name);
+    const b = who.followers.indexOf(user.name);
+
+    if (action === "follow") {
+      if (a === -1) user.following.push(who.name);
+      if (b === -1) who.followers.push(user.name);
+    } else {
+      if (a !== -1) user.following.splice(a, 1);
+      if (b !== -1) who.followers.splice(b, 1);
+    }
+
+    await users.setJSON(user.key, user);
+    await users.setJSON(who.key, who);
+    return json({ user: publicUser(user), profile: otherUser(who, user) });
+  }
+
+  // ---- marque le fil comme lu ----
+  if (action === "seen") {
+    const user = await current();
+    if (!user) return json({ error: "Not signed in" }, 401);
+    user.lastSeen = Date.now();
+    await users.setJSON(user.key, user);
+    return json({ ok: true, lastSeen: user.lastSeen });
   }
 
   // ---- like et repost : un interrupteur, un compte par personne ----
