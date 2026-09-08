@@ -124,6 +124,15 @@ a{color:var(--accent); text-decoration:none}
 a:hover{text-decoration:underline}
 :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
 
+/* thin progress line across the very top while a scan runs */
+.prog{
+  position:fixed; top:0; left:0; height:2px; width:0; z-index:70; pointer-events:none;
+  background:linear-gradient(90deg,#6FA8FF,#56E0C6,#A78BFA);
+  box-shadow:0 0 12px rgba(111,168,255,.7);
+  opacity:0; transition:width .4s ease, opacity .3s ease;
+}
+.prog.on{opacity:1}
+
 /* ============ top navigation ============ */
 
 .nav{
@@ -388,7 +397,7 @@ p.sec{color:var(--muted); margin:0 0 22px; max-width:66ch; font-size:14.5px}
 @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
 
 /* ---- token identity header ---- */
-.thead{display:flex; align-items:center; gap:16px; padding:18px 22px; flex-wrap:wrap}
+.thead{display:flex; align-items:center; gap:16px; padding:18px 22px; flex-wrap:wrap; scroll-margin-top:78px}
 .thead .avatar{
   width:52px; height:52px; border-radius:14px; flex:none; object-fit:cover;
   background:var(--panel-3); box-shadow:0 6px 20px -8px rgba(0,0,0,.8);
@@ -731,6 +740,7 @@ footer p:last-child{margin-bottom:0}
 <body>
 
 <div class="grain" aria-hidden="true"></div>
+<div class="prog" id="prog" aria-hidden="true"></div>
 
 <nav class="nav">
   <div class="nav-in">
@@ -741,6 +751,7 @@ footer p:last-child{margin-bottom:0}
 
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-scanner"  data-tab="scanner"  aria-selected="true"  aria-controls="view-scanner">Scanner</button>
+      <button class="tab" role="tab" id="tab-checked"  data-tab="checked"  aria-selected="false" aria-controls="view-checked">Checked</button>
       <button class="tab" role="tab" id="tab-trending" data-tab="trending" aria-selected="false" aria-controls="view-trending">Trending</button>
       <button class="tab" role="tab" id="tab-method"   data-tab="method"   aria-selected="false" aria-controls="view-method">Method</button>
       <button class="tab" role="tab" id="tab-about"    data-tab="about"    aria-selected="false" aria-controls="view-about">About</button>
@@ -807,7 +818,7 @@ footer p:last-child{margin-bottom:0}
       </div>
 
       <div class="strip fade-up d4" id="strip" hidden>
-        <span class="strip-label"><span class="pip"></span><span id="stripLabel">Live on Solana</span></span>
+        <span class="strip-label"><span class="pip"></span><span id="stripLabel">Fresh on Solana</span></span>
         <div class="strip-view"><div class="strip-track" id="stripTrack"></div></div>
       </div>
     </div>
@@ -914,6 +925,18 @@ footer p:last-child{margin-bottom:0}
         <p class="note"><b>What the tool sees.</b> Mint and freeze authorities, total supply, and the twenty largest token accounts with their real owner. When several accounts in the top 20 share one owner, it gets flagged — that is the most common bundling pattern. Liquidity pools are detected and excluded from concentration, so a pool holding most of the supply does not read as a whale.</p>
         <p class="note warn"><b>What it does not see yet.</b> Snipers — who bought in the first blocks — and who funded which wallet. Both need the token's transaction history, which is a different and much heavier set of calls. A clean result here means these specific checks passed, not that a token is safe.</p>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CHECKED ============ -->
+<div class="view" id="view-checked" role="tabpanel" aria-labelledby="tab-checked">
+  <div class="wrap">
+    <div class="slab">
+      <div class="eyebrow">Checked on Clearing</div>
+      <h2 class="sec">What people are scanning</h2>
+      <p class="sec">Every token run through the scanner lands here, newest first, with how many times it has been checked. No accounts, no visitor data — just the tokens.</p>
+      <div class="grid" id="checkedGrid"><div class="empty">Loading…</div></div>
     </div>
   </div>
 </div>
@@ -1081,9 +1104,31 @@ footer p:last-child{margin-bottom:0}
   function short(a){ return a ? a.slice(0,4) + "…" + a.slice(-4) : "—"; }
   function pct(n){ return n.toFixed(2) + "%"; }
 
+  var progEl = $("prog");
+
   function setStatus(text, state){
+    statusEl.hidden = false;
     statusEl.className = "under" + (state ? " " + state : "");
     statusText.textContent = text;
+  }
+
+  /* Once the report is on screen it speaks for itself — the connection line
+     is noise at that point, so it disappears instead of stating the obvious. */
+  function clearStatus(){
+    statusEl.hidden = true;
+    statusText.textContent = "";
+  }
+
+  /* Thin line across the top of the window: it advances through the known
+     stages of a scan rather than pretending to know the real percentage. */
+  function progress(p){
+    if(p === null){
+      progEl.classList.remove("on");
+      setTimeout(function(){ progEl.style.width = "0"; }, 300);
+      return;
+    }
+    progEl.classList.add("on");
+    progEl.style.width = p + "%";
   }
 
   function busy(on){
@@ -1169,6 +1214,39 @@ footer p:last-child{margin-bottom:0}
     '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
   var DONE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>';
+  var SHARE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M10.6 13.4a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.4 1.4"/>' +
+    '<path d="M13.4 10.6a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.4-1.4"/></svg>';
+
+  /* Small helper so both buttons behave the same: swap to a tick, then back. */
+  function copyToClipboard(text, btn, restoreSvg){
+    var done = function(){
+      btn.innerHTML = DONE_SVG; btn.classList.add("done");
+      setTimeout(function(){ btn.innerHTML = restoreSvg; btn.classList.remove("done"); }, 1400);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){});
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); done(); }catch(e){}
+      document.body.removeChild(ta);
+    }
+  }
+
+  /* Bring the report into view once it is ready — on a tall hero the result
+     lands below the fold and people think nothing happened. */
+  function revealResult(){
+    var target = tokenHead;
+    if(!target || target.hidden) return;
+    /* scroll-margin-top on .thead keeps the sticky nav from covering it */
+    try{
+      target.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block:"start"});
+    }catch(e){
+      target.scrollIntoView();
+    }
+  }
 
   function headOpen(mint){
     tokenHead.innerHTML =
@@ -1178,25 +1256,18 @@ footer p:last-child{margin-bottom:0}
           '<span class="chg" id="thChg" hidden></span></div>' +
         '<div class="addr-row"><span class="ca" id="thCa"></span>' +
           '<button class="copy" id="thCopy" type="button" title="Copy address" aria-label="Copy address">' +
-          COPY_SVG + '</button></div>' +
+          COPY_SVG + '</button>' +
+          '<button class="copy" id="thShare" type="button" title="Copy a link to this scan" aria-label="Copy a link to this scan">' +
+          SHARE_SVG + '</button></div>' +
       '</div>' +
       '<div class="facts" id="thFacts"></div>';
 
     $("thCa").textContent = mint;
     $("thCopy").addEventListener("click", function(){
-      var btn = this;
-      var done = function(){
-        btn.innerHTML = DONE_SVG; btn.classList.add("done");
-        setTimeout(function(){ btn.innerHTML = COPY_SVG; btn.classList.remove("done"); }, 1400);
-      };
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(mint).then(done, function(){});
-      } else {
-        var ta = document.createElement("textarea");
-        ta.value = mint; document.body.appendChild(ta); ta.select();
-        try{ document.execCommand("copy"); done(); }catch(e){}
-        document.body.removeChild(ta);
-      }
+      copyToClipboard(mint, this, COPY_SVG);
+    });
+    $("thShare").addEventListener("click", function(){
+      copyToClipboard(location.origin + "/?ca=" + mint, this, SHARE_SVG);
     });
 
     tokenHead.hidden = false;
@@ -1546,6 +1617,25 @@ footer p:last-child{margin-bottom:0}
     return null;
   }
 
+  /* Add the token to the public register. Only called once the chain has
+     confirmed it really is a mint, so the list cannot be filled with junk
+     through the interface. Failure is silent: the register is a nice-to-have
+     and must never break a scan. */
+  function recordScan(mint, dex){
+    try{
+      fetch("/api/scans", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          mint: mint,
+          sym: (dex && dex.sym) || "",
+          name: (dex && dex.name) || "",
+          img: (dex && dex.img) || ""
+        })
+      }).catch(function(){});
+    }catch(e){}
+  }
+
   function analyse(){
     var raw = caEl.value;
     errEl.classList.remove("on");
@@ -1562,7 +1652,11 @@ footer p:last-child{margin-bottom:0}
     busy(true);
     skeleton();
     headOpen(mint);
+    progress(18);
     setStatus("reading the mint account…", "busy");
+
+    /* the address goes into the URL so a scan can be linked to and shared */
+    try{ history.replaceState(null, "", "?ca=" + mint); }catch(e){}
 
     /* market data and chain data are independent — fetch them together */
     var marketP = fetchMarket(mint).then(function(dex){
@@ -1584,19 +1678,26 @@ footer p:last-child{margin-bottom:0}
         if(!parsed || parsed.type !== "mint") throw new Error("This address is not a token. It might be a wallet or a pool.");
         info = parsed.info;
 
+        progress(45);
         setStatus("fetching the largest holders…", "busy");
         return holders(mint, info).catch(function(){ return null; });
       })
       .then(function(data){
+        progress(80);
         return marketP.then(function(dex){
           headFacts(info, dex);
           render(info, data, dex);
           busy(false);
-          setStatus("connected via " + lastNode + (data ? "" : " · holder data unavailable"), "live");
+          progress(100);
+          setTimeout(function(){ progress(null); }, 400);
+          clearStatus();
+          revealResult();
+          recordScan(mint, dex);
         });
       })
       .catch(function(e){
         signalsEl.innerHTML = "";
+        progress(null);
         fail(e && e.message ? e.message : String(e));
         setStatus("no connection", "");
       });
@@ -1897,7 +1998,24 @@ footer p:last-child{margin-bottom:0}
 
   goBtn.addEventListener("click", analyse);
   caEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
-  caEl.focus();
+
+  /* "/" jumps to the field from anywhere, the way search boxes usually behave */
+  document.addEventListener("keydown", function(e){
+    if(e.key === "/" && document.activeElement !== caEl && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)){
+      e.preventDefault();
+      caEl.focus();
+      caEl.select();
+    }
+  });
+
+  /* A shared link like /?ca=<address> runs the scan straight away. */
+  var deep = new URLSearchParams(location.search).get("ca");
+  if(deep && extractMint(deep)){
+    caEl.value = deep;
+    analyse();
+  } else {
+    caEl.focus();
+  }
 })();
 
 
@@ -1908,7 +2026,7 @@ footer p:last-child{margin-bottom:0}
 (function(){
   "use strict";
 
-  var VIEWS = ["scanner","trending","method","about"];
+  var VIEWS = ["scanner","checked","trending","method","about"];
   var trendLoaded = false;
 
   function show(name, push){
@@ -1926,6 +2044,8 @@ footer p:last-child{margin-bottom:0}
       history.pushState(null, "", "#" + name);
     }
     if(name === "trending") loadTrending();
+    /* always refreshed: it is a live register, not a static page */
+    if(name === "checked") loadChecked();
     window.scrollTo({top:0, behavior:"auto"});
   }
 
@@ -1976,6 +2096,65 @@ footer p:last-child{margin-bottom:0}
       document.getElementById("go").click();
     });
     return el;
+  }
+
+  /* ---------------- checked register ---------------- */
+
+  var checkedGrid = document.getElementById("checkedGrid");
+
+  function ago(ms){
+    if(!ms) return "";
+    var s = (Date.now() - ms) / 1000;
+    if(s < 60) return "just now";
+    if(s < 3600) return Math.round(s / 60) + "m ago";
+    if(s < 86400) return Math.round(s / 3600) + "h ago";
+    return Math.round(s / 86400) + "d ago";
+  }
+
+  function checkedCard(t){
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = "tcard";
+    el.title = "Scan " + (t.name || t.mint);
+    el.innerHTML =
+      (t.img ? '<img src="' + t.img + '" alt="" loading="lazy" onerror="this.remove()">'
+             : '<span class="ph"></span>') +
+      '<span class="tx"><span class="s"></span><span class="n"></span></span>' +
+      '<span class="p"></span>';
+    if(!t.img) el.querySelector(".ph").textContent = (t.sym || "?").slice(0,3).toUpperCase();
+    el.querySelector(".s").textContent = (t.sym || t.mint.slice(0,4)).toUpperCase();
+    el.querySelector(".n").textContent = ago(t.last);
+    el.querySelector(".p").textContent = "×" + (t.count || 1);
+
+    el.addEventListener("click", function(){
+      show("scanner", true);
+      document.getElementById("ca").value = t.mint;
+      document.getElementById("go").click();
+    });
+    return el;
+  }
+
+  function loadChecked(){
+    checkedGrid.innerHTML = '<div class="empty">Loading…</div>';
+    fetch("/api/scans", {cache:"no-store"})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var list = (j && j.scans) || [];
+        if(!list.length){
+          checkedGrid.innerHTML = '<div class="empty">Nothing scanned yet. Be the first — run a token through the scanner.</div>';
+          return;
+        }
+        checkedGrid.innerHTML = "";
+        list.forEach(function(t, i){
+          var c = checkedCard(t);
+          c.style.animation = "rise .4s cubic-bezier(.22,.9,.3,1) both";
+          c.style.animationDelay = Math.min(i * 22, 400) + "ms";
+          checkedGrid.appendChild(c);
+        });
+      })
+      .catch(function(){
+        checkedGrid.innerHTML = '<div class="empty">The register did not answer. Try again in a minute.</div>';
+      });
   }
 
   function loadTrending(){
@@ -2315,7 +2494,7 @@ footer p:last-child{margin-bottom:0}
   function buildStrip(){
     var recent = readRecent();
     if(recent.length >= 3){
-      paintStrip(recent, "Your recent checks");
+      paintStrip(recent, "Recently scanned");
       return;
     }
     loadFeed();
@@ -2344,7 +2523,7 @@ footer p:last-child{margin-bottom:0}
               seen[b.address] = 1;
               out.push({mint:b.address, sym:b.symbol, name:b.name, img:(p.info||{}).imageUrl || ""});
             });
-            paintStrip(out, "Live on Solana");
+            paintStrip(out, "Fresh on Solana");
           });
       })
       .catch(function(){ strip.hidden = true; });

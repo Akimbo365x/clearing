@@ -1,0 +1,9 @@
+{
+  "name": "clearing",
+  "private": true,
+  "type": "module",
+  "description": "Solana token scanner",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
