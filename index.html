@@ -6,20 +6,25 @@
 <meta name="theme-color" content="#0A0C10">
 
 <title>Clearing — Solana Token Scanner</title>
-<meta name="description" content="Paste a Solana contract address. Clearing reads the chain and shows the three traps that matter: live authorities, whale concentration, and wallets owned by the same person.">
+<meta name="description" content="Paste a Solana contract address. Clearing reads the chain and shows who still controls the token: live authorities, holder concentration, and bundled wallets.">
 
-<!-- Tab icon. Placeholder mark — swap the data URI below for your own logo file. -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236FA8FF'/%3E%3Ctext x='16' y='22.5' font-family='Helvetica,Arial,sans-serif' font-size='19' font-weight='700' text-anchor='middle' fill='%230A0C10'%3EC%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
 
-<!-- Link previews on Discord, Telegram, X. Add <meta property="og:image"> once the logo image exists. -->
+<!-- Link previews on Discord, Telegram, X. og:image must be an absolute URL. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Clearing">
 <meta property="og:title" content="Clearing — Solana Token Scanner">
-<meta property="og:description" content="Paste a contract address. See live authorities, whale concentration, and bundled wallets before you buy.">
+<meta property="og:description" content="Paste a contract address. See live authorities, holder concentration and bundled wallets before you buy.">
 <meta property="og:url" content="https://clearing111.netlify.app">
+<meta property="og:image" content="https://clearing111.netlify.app/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Clearing — analyze, detect, protect">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Clearing — Solana Token Scanner">
-<meta name="twitter:description" content="Paste a contract address. See live authorities, whale concentration, and bundled wallets before you buy.">
+<meta name="twitter:description" content="Paste a contract address. See live authorities, holder concentration and bundled wallets before you buy.">
+<meta name="twitter:image" content="https://clearing111.netlify.app/og.jpg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +35,7 @@
   --bg:#0A0C10;
   --panel:#111419;
   --panel-2:#161A21;
+  --panel-3:#1B2029;
   --line:#212731;
   --line-soft:#1A1F27;
   --text:#E8EBF0;
@@ -44,18 +50,19 @@
   --f-sans:"Familjen Grotesk","Helvetica Neue",system-ui,-apple-system,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 
-  --maxw:840px;
+  --maxw:920px;
   --gutter:clamp(18px,5vw,28px);
   --r:14px;
   --r-sm:9px;
+  --ticker-h:38px;
 }
 
 *{box-sizing:border-box}
-
 html{-webkit-text-size-adjust:100%}
 
 body{
   margin:0;
+  padding-bottom:var(--ticker-h);
   background:var(--bg);
   color:var(--text);
   font-family:var(--f-sans);
@@ -65,13 +72,23 @@ body{
   text-rendering:optimizeLegibility;
 }
 
-/* Soft glow behind the hero, purely decorative. */
+/* Decorative depth behind the page: two soft lights and a faint grid. */
 body::before{
   content:"";
   position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
-    radial-gradient(760px 420px at 50% -8%, rgba(111,168,255,.11), transparent 68%),
-    radial-gradient(560px 320px at 88% 4%, rgba(63,185,138,.05), transparent 70%);
+    radial-gradient(820px 460px at 50% -10%, rgba(111,168,255,.13), transparent 68%),
+    radial-gradient(620px 340px at 88% 2%, rgba(63,185,138,.05), transparent 70%);
+}
+body::after{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
+  background-image:
+    linear-gradient(rgba(255,255,255,.021) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.021) 1px, transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(760px 420px at 50% 0%, #000 0%, transparent 72%);
+  -webkit-mask-image:radial-gradient(760px 420px at 50% 0%, #000 0%, transparent 72%);
 }
 
 .wrap{position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
@@ -82,35 +99,37 @@ a:hover{text-decoration:underline}
 
 /* ============ hero ============ */
 
-.hero{text-align:center; padding:clamp(44px,9vw,84px) 0 clamp(26px,4vw,36px)}
+.hero{text-align:center; padding:clamp(40px,8vw,76px) 0 clamp(24px,4vw,32px)}
 
-.brand{display:inline-flex; align-items:center; gap:11px; margin-bottom:clamp(24px,5vw,38px)}
+.brand{display:inline-flex; align-items:center; gap:12px; margin-bottom:clamp(22px,5vw,34px)}
 .mark{
-  width:34px; height:34px; flex:none; display:grid; place-items:center;
-  background:var(--accent); color:var(--bg); border-radius:var(--r-sm);
-  font-weight:700; font-size:19px; line-height:1;
-  box-shadow:0 0 0 1px rgba(111,168,255,.35), 0 8px 26px -10px rgba(111,168,255,.65);
+  width:44px; height:44px; flex:none; display:block;
+  filter:drop-shadow(0 6px 22px rgba(60,140,255,.42));
+  animation:markIn .7s cubic-bezier(.2,.8,.25,1) both;
 }
-.wordmark{font-weight:700; font-size:20px; letter-spacing:-.01em}
+@keyframes markIn{from{opacity:0; transform:scale(.82) translateY(6px)} to{opacity:1; transform:none}}
+.wordmark{font-weight:700; font-size:21px; letter-spacing:-.015em}
 .tag{
   font-family:var(--f-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase;
-  color:var(--faint); border:1px solid var(--line); border-radius:100px; padding:3px 10px; margin-left:4px;
+  color:var(--faint); border:1px solid var(--line); border-radius:100px; padding:3px 10px; margin-left:2px;
 }
 
 h1{
-  font-size:clamp(30px,6.2vw,46px); font-weight:700; line-height:1.1;
-  letter-spacing:-.028em; margin:0 auto 18px; max-width:15ch;
+  font-size:clamp(29px,5.6vw,45px); font-weight:700; line-height:1.12;
+  letter-spacing:-.028em; margin:0 auto 18px; max-width:17ch;
 }
 h1 em{font-style:normal; color:var(--accent); white-space:nowrap}
 
 .lede{
   color:var(--muted); font-size:clamp(15px,2.2vw,16.5px);
-  margin:0 auto; max-width:56ch;
+  margin:0 auto; max-width:58ch;
 }
 
-/* ============ search ============ */
+.fade-up{animation:fadeUp .6s cubic-bezier(.2,.8,.25,1) both}
+.d1{animation-delay:.06s} .d2{animation-delay:.12s} .d3{animation-delay:.18s}
+@keyframes fadeUp{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
 
-.search-outer{padding-bottom:6px}
+/* ============ search ============ */
 
 .search{
   display:flex; align-items:center; gap:10px;
@@ -123,7 +142,7 @@ h1 em{font-style:normal; color:var(--accent); white-space:nowrap}
   border-color:var(--accent-dim); background:var(--panel-2);
   box-shadow:0 0 0 4px rgba(111,168,255,.09), 0 18px 44px -30px rgba(0,0,0,.9);
 }
-.search svg{flex:none; width:17px; height:17px; color:var(--faint)}
+.search > svg{flex:none; width:17px; height:17px; color:var(--faint)}
 .search input{
   flex:1; min-width:0; background:none; border:none; outline:none; color:var(--text);
   font-family:var(--f-mono); font-size:14px; padding:11px 0;
@@ -135,47 +154,61 @@ button{
   border-radius:var(--r-sm); border:1px solid var(--accent);
   background:var(--accent); color:var(--bg);
   padding:11px 22px; cursor:pointer; white-space:nowrap;
-  transition:background .16s ease, border-color .16s ease, opacity .16s ease, transform .16s ease;
+  transition:background .16s ease, border-color .16s ease, opacity .16s ease, transform .12s ease;
 }
 button:hover:not(:disabled){background:#8CBAFF; border-color:#8CBAFF}
 button:active:not(:disabled){transform:translateY(1px)}
 button:disabled{opacity:.5; cursor:not-allowed}
-button.ghost{background:none; color:var(--muted); border-color:var(--line)}
-button.ghost:hover:not(:disabled){color:var(--text); border-color:var(--faint); background:var(--panel-2)}
 
 .under{
   display:flex; align-items:flex-start; justify-content:center; gap:9px;
-  margin:14px 0 0; font-size:12.5px; color:var(--faint);
-  font-family:var(--f-mono);
+  margin:14px 0 0; font-size:12.5px; color:var(--faint); font-family:var(--f-mono);
+  min-height:20px;
 }
 .under .dot{width:6px; height:6px; flex:none; margin-top:6px; background:var(--faint); border-radius:50%; transition:background .2s ease}
 .under.live .dot{background:var(--ok); box-shadow:0 0 0 3px rgba(63,185,138,.16)}
+.under.busy .dot{background:var(--accent); animation:pulse 1.1s ease-in-out infinite}
 .under.live{color:var(--muted)}
-.under .sep{color:var(--line)}
-.under button.reset{
-  background:none; border:none; padding:0; color:var(--faint); font-family:var(--f-mono);
-  font-size:12.5px; font-weight:400; text-decoration:underline; cursor:pointer;
-}
-.under button.reset:hover{color:var(--text)}
+@keyframes pulse{0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(111,168,255,.4)} 50%{opacity:.55; box-shadow:0 0 0 5px rgba(111,168,255,0)}}
 
 /* ============ results ============ */
 
-.results{padding-top:clamp(30px,6vw,44px)}
+.results{padding-top:clamp(28px,5vw,40px)}
 
 .card{
   background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
-  margin-bottom:16px; overflow:hidden;
+  margin-bottom:14px; overflow:hidden;
 }
 
-.reveal{animation:rise .38s cubic-bezier(.22,.9,.3,1) both}
-@keyframes rise{from{opacity:0; transform:translateY(9px)} to{opacity:1; transform:none}}
+.reveal{animation:rise .42s cubic-bezier(.22,.9,.3,1) both}
+@keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
 
-/* verdict */
-.verdict{padding:22px 24px; position:relative; display:none}
-.verdict.on{display:block}
+/* ---- verdict + score ---- */
+.verdict{display:none; padding:22px 24px; position:relative}
+.verdict.on{display:flex; gap:24px; align-items:center}
 .verdict::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--line)}
 .v-ok::before{background:var(--ok)} .v-warn::before{background:var(--warn)} .v-bad::before{background:var(--bad)}
-.verdict .tags{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:13px}
+@media(max-width:560px){ .verdict.on{flex-direction:column; align-items:flex-start; gap:16px} }
+
+.score{position:relative; flex:none; width:104px; height:104px}
+.score svg{width:104px; height:104px; transform:rotate(-90deg)}
+.score .track{fill:none; stroke:var(--line); stroke-width:7}
+.score .bar{fill:none; stroke:var(--accent); stroke-width:7; stroke-linecap:round;
+  transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.25,1), stroke .3s ease}
+.v-ok .score .bar{stroke:var(--ok)} .v-warn .score .bar{stroke:var(--warn)} .v-bad .score .bar{stroke:var(--bad)}
+.score .val{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; line-height:1.1;
+}
+.score .num{font-weight:700; font-size:26px; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.v-ok .score .num{color:var(--ok)} .v-warn .score .num{color:var(--warn)} .v-bad .score .num{color:var(--bad)}
+.score .out{
+  margin-top:2px; font-family:var(--f-mono); font-size:8px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--faint); white-space:nowrap;
+}
+
+.vbody{min-width:0; flex:1}
+.verdict .tags{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:11px}
 .badge{
   font-family:var(--f-mono); font-weight:700; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   padding:4px 11px; border:1px solid currentColor; border-radius:100px;
@@ -185,22 +218,41 @@ button.ghost:hover:not(:disabled){color:var(--text); border-color:var(--faint); 
   font-family:var(--f-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--faint); border:1px dashed var(--line); border-radius:100px; padding:3px 10px;
 }
-.verdict h2{font-size:21px; font-weight:700; letter-spacing:-.015em; margin:0 0 7px; line-height:1.28}
+.verdict h2{font-size:21px; font-weight:700; letter-spacing:-.018em; margin:0 0 6px; line-height:1.28}
 .v-ok h2{color:var(--ok)} .v-warn h2{color:var(--warn)} .v-bad h2{color:var(--bad)}
-.verdict p{margin:0; color:var(--muted); font-size:14.5px; max-width:66ch}
+.verdict p{margin:0; color:var(--muted); font-size:14.5px; max-width:62ch}
 
-/* signals */
-.signals{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:16px}
-@media(max-width:600px){ .signals{grid-template-columns:1fr} }
-.sig{background:var(--panel); padding:17px 19px 19px; display:flex; flex-direction:column; gap:4px}
-.sig .stripe{height:2px; width:34px; background:var(--line); border-radius:2px; margin-bottom:11px}
+/* ---- signals ---- */
+.signals{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:var(--line); border:1px solid var(--line); border-radius:var(--r);
+  overflow:hidden; margin-bottom:14px;
+}
+@media(max-width:760px){ .signals{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:460px){ .signals{grid-template-columns:1fr} }
+.sig{
+  background:var(--panel); padding:16px 18px 18px; display:flex; flex-direction:column; gap:3px;
+  transition:background .18s ease;
+}
+.sig:hover{background:var(--panel-2)}
+.sig .stripe{height:2px; width:32px; background:var(--line); border-radius:2px; margin-bottom:11px}
 .sig.ok .stripe{background:var(--ok)} .sig.warn .stripe{background:var(--warn)} .sig.bad .stripe{background:var(--bad)}
-.sig .k{font-family:var(--f-mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
-.sig .v{font-size:23px; font-weight:700; line-height:1.2; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.sig .k{font-family:var(--f-mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
+.sig .v{font-size:22px; font-weight:700; line-height:1.25; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
 .sig.ok .v{color:var(--ok)} .sig.warn .v{color:var(--warn)} .sig.bad .v{color:var(--bad)}
-.sig .n{font-size:13px; color:var(--muted); line-height:1.5; margin-top:3px}
+.sig.na .v{color:var(--faint)}
+.sig .n{font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:3px}
 
-/* holders */
+/* loading skeleton */
+.sig.skel .k, .sig.skel .v, .sig.skel .n{
+  color:transparent; background:linear-gradient(90deg, var(--panel-2) 25%, var(--panel-3) 37%, var(--panel-2) 63%);
+  background-size:400% 100%; border-radius:5px; animation:shimmer 1.3s ease infinite;
+}
+.sig.skel .k{width:60%; height:11px} .sig.skel .v{width:45%; height:24px; margin:4px 0}
+.sig.skel .n{width:88%; height:30px}
+@keyframes shimmer{0%{background-position:100% 0} 100%{background-position:-100% 0}}
+
+/* ---- holders ---- */
 .card-head{
   padding:15px 20px; border-bottom:1px solid var(--line-soft);
   display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
@@ -218,9 +270,11 @@ td.addr a{color:inherit}
 td.addr a:hover{color:var(--accent); text-decoration:none}
 th.pct,td.pct{text-align:right; width:1%; white-space:nowrap}
 td.pct b{color:var(--text); font-weight:700; font-size:13.5px}
+tbody tr{animation:rowIn .32s ease both}
+@keyframes rowIn{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--panel-2)}
-.bar{display:block; height:2px; border-radius:2px; background:var(--accent-dim); margin-top:5px; margin-left:auto; min-width:2px; opacity:.7}
+.bar{display:block; height:2px; border-radius:2px; background:var(--accent-dim); margin-top:5px; margin-left:auto; min-width:2px; opacity:.75}
 .chip{
   display:inline-block; font-family:var(--f-mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
   padding:2px 7px; border:1px solid currentColor; border-radius:100px; margin-left:8px; vertical-align:1px;
@@ -240,11 +294,11 @@ tbody tr:hover td{background:var(--panel-2)}
 
 #err{
   display:none; border:1px solid rgba(224,90,78,.5); background:rgba(224,90,78,.07);
-  color:#F09189; padding:15px 18px; margin-bottom:16px; font-size:14px; border-radius:var(--r);
+  color:#F09189; padding:15px 18px; margin-bottom:14px; font-size:14px; border-radius:var(--r);
 }
-#err.on{display:block}
+#err.on{display:block; animation:rise .3s ease both}
 
-footer{border-top:1px solid var(--line); margin-top:44px; padding:26px 0 56px; color:var(--faint); font-size:12.5px}
+footer{border-top:1px solid var(--line); margin-top:42px; padding:26px 0 40px; color:var(--faint); font-size:12.5px}
 footer p{margin:0 0 11px; max-width:74ch}
 footer p:last-child{margin-bottom:0}
 
@@ -255,9 +309,42 @@ footer p:last-child{margin-bottom:0}
 }
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* ============ price ticker ============ */
+
+.ticker{
+  position:fixed; left:0; right:0; bottom:0; z-index:20; height:var(--ticker-h);
+  display:flex; align-items:center; justify-content:center; gap:0;
+  background:rgba(13,16,21,.82); border-top:1px solid var(--line);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  font-family:var(--f-mono); font-size:12px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.ticker::-webkit-scrollbar{display:none}
+.ticker-in{display:flex; align-items:center; gap:0; padding:0 14px; white-space:nowrap}
+
+.tk{display:inline-flex; align-items:center; gap:8px; padding:0 15px; position:relative}
+.tk + .tk::before{content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:1px; height:13px; background:var(--line)}
+.tk .sym{color:var(--faint); letter-spacing:.09em; font-size:10.5px}
+.tk .px{color:var(--text); font-weight:500; font-variant-numeric:tabular-nums; transition:color .45s ease}
+.tk .px.up{color:var(--ok)} .tk .px.down{color:var(--bad)}
+.tk .ch{font-size:11px; font-variant-numeric:tabular-nums; color:var(--faint)}
+.tk .ch.up{color:var(--ok)} .tk .ch.down{color:var(--bad)}
+
+.tk-live{display:inline-flex; align-items:center; gap:7px; padding:0 15px; color:var(--faint); font-size:10px; letter-spacing:.14em; text-transform:uppercase; position:relative}
+.tk-live::before{content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:1px; height:13px; background:var(--line)}
+.tk-live i{width:6px; height:6px; border-radius:50%; background:var(--faint); transition:background .3s ease}
+.tk-live.on i{background:var(--ok); animation:beat 2s ease-in-out infinite}
+@keyframes beat{0%,100%{box-shadow:0 0 0 0 rgba(63,185,138,.45)} 60%{box-shadow:0 0 0 5px rgba(63,185,138,0)}}
+
+@media(max-width:520px){
+  .tk{padding:0 11px; gap:6px}
+  .tk .ch{display:none}
+  .tk-live{display:none}
+}
+
 @media (prefers-reduced-motion:reduce){
-  .spin{animation:none}
-  .reveal{animation:none}
+  .spin, .sig.skel .k, .sig.skel .v, .sig.skel .n, .tk-live.on i, .under.busy .dot{animation:none}
+  .reveal, .fade-up, .mark, tbody tr{animation:none}
   *{transition:none !important}
 }
 </style>
@@ -268,15 +355,15 @@ footer p:last-child{margin-bottom:0}
 
   <header class="hero">
     <div class="brand">
-      <span class="mark">C</span>
+      <img class="mark" src="/logo.png" width="44" height="44" alt="" decoding="async">
       <span class="wordmark">Clearing</span>
       <span class="tag">Solana</span>
     </div>
-    <h1>See who can still <em>rug you</em>.</h1>
-    <p class="lede">Paste a contract address. Clearing reads the chain and shows the three traps that matter — live authorities, whale concentration, and multiple wallets owned by the same person.</p>
+    <h1 class="fade-up d1">See who still <em>controls</em> this token.</h1>
+    <p class="lede fade-up d2">Paste a contract address. Clearing reads the chain and reports what decides whether you can get out — live authorities, how much supply sits in a few hands, and wallets that belong to the same person.</p>
   </header>
 
-  <div class="search-outer">
+  <div class="fade-up d3">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
@@ -297,12 +384,22 @@ footer p:last-child{margin-bottom:0}
     <div id="err"></div>
 
     <div class="card verdict v-warn on" id="verdict">
-      <div class="tags">
-        <span class="sample">Sample — placeholder numbers</span>
-        <span class="badge">Caution</span>
+      <div class="score" id="score">
+        <svg viewBox="0 0 104 104" aria-hidden="true">
+          <circle class="track" cx="52" cy="52" r="45"></circle>
+          <circle class="bar" id="scoreBar" cx="52" cy="52" r="45"
+                  stroke-dasharray="282.7" stroke-dashoffset="110"></circle>
+        </svg>
+        <div class="val"><span class="num">61</span><span class="out">sample</span></div>
       </div>
-      <h2>High concentration outside the pool</h2>
-      <p>This is what a result looks like. Paste a real contract address above to run a live analysis.</p>
+      <div class="vbody">
+        <div class="tags">
+          <span class="sample">Sample — placeholder numbers</span>
+          <span class="badge">Caution</span>
+        </div>
+        <h2>High concentration outside the pool</h2>
+        <p>This is what a result looks like. Paste a real contract address above to run a live analysis.</p>
+      </div>
     </div>
 
     <div class="signals" id="signals">
@@ -320,15 +417,27 @@ footer p:last-child{margin-bottom:0}
       </div>
       <div class="sig warn">
         <div class="stripe"></div>
-        <div class="k">Top 10 outside pool</div>
+        <div class="k">Top 10 holders</div>
         <div class="v">38.40%</div>
-        <div class="n">Share of supply held by the ten largest wallets, pool excluded.</div>
+        <div class="n">Supply held by the ten largest wallets, pool excluded.</div>
+      </div>
+      <div class="sig warn">
+        <div class="stripe"></div>
+        <div class="k">Largest holder</div>
+        <div class="v">12.80%</div>
+        <div class="n">Biggest single wallet outside the pool.</div>
       </div>
       <div class="sig bad">
         <div class="stripe"></div>
         <div class="k">Bundled wallets</div>
         <div class="v">6</div>
         <div class="n">Top 20 accounts that share a single owner.</div>
+      </div>
+      <div class="sig na">
+        <div class="stripe"></div>
+        <div class="k">Snipers</div>
+        <div class="v">—</div>
+        <div class="n">Needs transaction history. Not measured yet.</div>
       </div>
     </div>
 
@@ -344,7 +453,7 @@ footer p:last-child{margin-bottom:0}
           </thead>
           <tbody id="holders">
             <tr><td class="rank">1</td><td class="addr">5Qa4…9xTf<span class="chip c-pool">Pool</span></td><td>program</td><td class="pct"><b>51.20%</b><span class="bar" style="width:52px"></span></td></tr>
-            <tr><td class="rank">2</td><td class="addr">B7mK…2wDs<span class="chip c-cluster">Bundle</span></td><td>9Fh2…7kLm</td><td class="pct"><b>8.90%</b><span class="bar" style="width:9px"></span></td></tr>
+            <tr><td class="rank">2</td><td class="addr">B7mK…2wDs<span class="chip c-cluster">Bundle</span></td><td>9Fh2…7kLm</td><td class="pct"><b>12.80%</b><span class="bar" style="width:13px"></span></td></tr>
             <tr><td class="rank">3</td><td class="addr">Cc81…4pQr<span class="chip c-cluster">Bundle</span></td><td>9Fh2…7kLm</td><td class="pct"><b>7.40%</b><span class="bar" style="width:7px"></span></td></tr>
             <tr><td class="rank">4</td><td class="addr">Dm93…8vNb</td><td>4Tz9…1cXy</td><td class="pct"><b>5.10%</b><span class="bar" style="width:5px"></span></td></tr>
           </tbody>
@@ -353,13 +462,13 @@ footer p:last-child{margin-bottom:0}
     </div>
 
     <div class="card notice" id="unavail" hidden>
-      <h3>Holder list unavailable</h3>
-      <p>The free public nodes this site runs on refuse the call that lists a token's largest accounts. The authority checks above were still read live from the chain — only concentration and bundling are missing.</p>
+      <h3>Holder data unavailable</h3>
+      <p>The free public nodes this site runs on refuse the call that lists a token's largest accounts. The authority checks above were still read live from the chain — concentration, bundling and the holder table are the parts that are missing.</p>
     </div>
 
     <div class="notes">
-      <p class="note"><b>What the tool sees.</b> Mint and freeze authorities, total supply, and the twenty largest token accounts with their real owner. When several accounts in the top 20 share one owner, it gets flagged — that is the most common bundling pattern.</p>
-      <p class="note warn"><b>What it does not see yet.</b> Who bought in the first block, or who funded which wallet. That needs transaction history, and it is what version 2 is for. A green result does not mean a token is safe — only that these three traps are not present.</p>
+      <p class="note"><b>What the tool sees.</b> Mint and freeze authorities, total supply, and the twenty largest token accounts with their real owner. When several accounts in the top 20 share one owner, it gets flagged — that is the most common bundling pattern. Liquidity pools are detected and excluded from concentration, so a pool holding most of the supply does not read as a whale.</p>
+      <p class="note warn"><b>What it does not see yet.</b> Snipers — who bought in the first blocks — and who funded which wallet. Both need the token's transaction history, which is a different and much heavier set of calls. A clean result here means these specific checks passed, not that a token is safe.</p>
     </div>
 
     <footer>
@@ -367,6 +476,15 @@ footer p:last-child{margin-bottom:0}
       <p>This is not financial advice. Most tokens go to zero, including the ones that pass every check above.</p>
     </footer>
 
+  </div>
+</div>
+
+<div class="ticker" id="ticker" aria-label="Live prices">
+  <div class="ticker-in">
+    <span class="tk" id="tk-BTC"><span class="sym">BTC</span><span class="px">—</span><span class="ch">—</span></span>
+    <span class="tk" id="tk-ETH"><span class="sym">ETH</span><span class="px">—</span><span class="ch">—</span></span>
+    <span class="tk" id="tk-SOL"><span class="sym">SOL</span><span class="px">—</span><span class="ch">—</span></span>
+    <span class="tk-live" id="tkLive"><i></i>live</span>
   </div>
 </div>
 
@@ -396,22 +514,21 @@ footer p:last-child{margin-bottom:0}
   var holdersCard=$("holdersCard"), unavailEl=$("unavail");
 
   var activeIdx = 0;
+  var lastNode = "";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function short(a){ return a ? a.slice(0,4) + "…" + a.slice(-4) : "—"; }
   function pct(n){ return n.toFixed(2) + "%"; }
 
-  function setStatus(text, live){
-    statusEl.className = "under" + (live ? " live" : "");
+  function setStatus(text, state){
+    statusEl.className = "under" + (state ? " " + state : "");
     statusText.textContent = text;
   }
 
   function busy(on){
     goBtn.disabled = on;
-    if(on){
-      goBtn.innerHTML = '<span class="spin"></span>Reading';
-    } else {
-      goBtn.textContent = "Analyze";
-    }
+    if(on){ goBtn.innerHTML = '<span class="spin"></span>Reading'; }
+    else { goBtn.textContent = "Analyze"; }
   }
 
   function fail(msg){
@@ -420,11 +537,27 @@ footer p:last-child{margin-bottom:0}
     busy(false);
   }
 
-  /* Re-trigger the entrance animation on an element. */
   function pop(el){
+    if(reduceMotion) return;
     el.classList.remove("reveal");
     void el.offsetWidth;
     el.classList.add("reveal");
+  }
+
+  /* Count a number up to its final value. Purely cosmetic — the final value is
+     written first, so a background tab (where rAF never fires) still shows the
+     right number instead of freezing at zero. */
+  function countTo(el, target, suffix, decimals){
+    el.textContent = target.toFixed(decimals) + suffix;
+    if(reduceMotion || document.visibilityState !== "visible") return;
+    var start = performance.now(), dur = 750;
+    function step(now){
+      var t = Math.min(1, (now - start) / dur);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = (target * eased).toFixed(decimals) + suffix;
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
 
   function solscan(addr){
@@ -436,6 +569,8 @@ footer p:last-child{margin-bottom:0}
     a.textContent = short(addr);
     return a;
   }
+
+  /* ---------------- rpc ---------------- */
 
   function callOne(url, method, params){
     var ctrl = new AbortController();
@@ -466,7 +601,6 @@ footer p:last-child{margin-bottom:0}
     });
   }
 
-  /* try the active node, fall through the rest on failure */
   function rpc(method, params){
     var attempts = 0;
     function go(){
@@ -475,7 +609,7 @@ footer p:last-child{margin-bottom:0}
       }
       var node = NODES[activeIdx % NODES.length];
       return callOne(node.url, method, params).then(function(res){
-        setStatus("connected via " + node.name, true);
+        lastNode = node.name;
         return res;
       }).catch(function(e){
         if(e && e.message === "__RETRY__"){
@@ -488,20 +622,49 @@ footer p:last-child{margin-bottom:0}
     return Promise.resolve().then(go);
   }
 
-  function setVerdict(cls, badge, title, text){
+  /* ---------------- rendering pieces ---------------- */
+
+  function setVerdict(cls, badge, title, text, score, checksDone, checksTotal){
     verdictEl.className = "card verdict on " + cls;
     verdictEl.innerHTML = "";
-    var tags=document.createElement("div"); tags.className="tags";
-    var b=document.createElement("span"); b.className="badge"; b.textContent=badge;
+
+    var scoreWrap = document.createElement("div");
+    scoreWrap.className = "score";
+    var C = 2 * Math.PI * 45;
+    scoreWrap.innerHTML =
+      '<svg viewBox="0 0 104 104" aria-hidden="true">' +
+      '<circle class="track" cx="52" cy="52" r="45"></circle>' +
+      '<circle class="bar" cx="52" cy="52" r="45" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '"></circle>' +
+      '</svg><div class="val"><span class="num">0</span><span class="out"></span></div>';
+
+    var body = document.createElement("div");
+    body.className = "vbody";
+    var tags = document.createElement("div"); tags.className = "tags";
+    var b = document.createElement("span"); b.className = "badge"; b.textContent = badge;
     tags.appendChild(b);
-    var h=document.createElement("h2"); h.textContent=title;
-    var p=document.createElement("p"); p.textContent=text;
-    verdictEl.appendChild(tags); verdictEl.appendChild(h); verdictEl.appendChild(p);
+    var h = document.createElement("h2"); h.textContent = title;
+    var p = document.createElement("p"); p.textContent = text;
+    body.appendChild(tags); body.appendChild(h); body.appendChild(p);
+
+    verdictEl.appendChild(scoreWrap);
+    verdictEl.appendChild(body);
+
+    var valEl = scoreWrap.querySelector(".num");
+    var barEl = scoreWrap.querySelector(".bar");
+    scoreWrap.querySelector(".out").textContent =
+      checksDone === checksTotal ? "score" : checksDone + "/" + checksTotal + " checks";
+
+    countTo(valEl, score, "", 0);
+    /* forced reflow so the CSS transition still runs from the full offset,
+       without depending on requestAnimationFrame firing */
+    void barEl.getBoundingClientRect();
+    barEl.style.strokeDashoffset = (C * (1 - score / 100)).toFixed(1);
+
     pop(verdictEl);
   }
 
   function sig(cls,k,v,n){
-    var d=document.createElement("div"); d.className="sig "+cls;
+    var d=document.createElement("div"); d.className="sig " + cls;
     var st=document.createElement("div"); st.className="stripe";
     var kk=document.createElement("div"); kk.className="k"; kk.textContent=k;
     var vv=document.createElement("div"); vv.className="v"; vv.textContent=v;
@@ -509,6 +672,19 @@ footer p:last-child{margin-bottom:0}
     d.appendChild(st); d.appendChild(kk); d.appendChild(vv); d.appendChild(nn);
     return d;
   }
+
+  function skeleton(){
+    signalsEl.innerHTML = "";
+    for(var i=0;i<6;i++){
+      var d=document.createElement("div"); d.className="sig skel";
+      d.innerHTML='<div class="stripe"></div><div class="k">·</div><div class="v">·</div><div class="n">·</div>';
+      signalsEl.appendChild(d);
+    }
+    holdersCard.hidden = true;
+    unavailEl.hidden = true;
+  }
+
+  /* ---------------- analysis ---------------- */
 
   function analyse(){
     var mint = caEl.value.trim();
@@ -520,7 +696,8 @@ footer p:last-child{margin-bottom:0}
     }
 
     busy(true);
-    setStatus("looking for an available node…", false);
+    skeleton();
+    setStatus("reading the mint account…", "busy");
 
     var info;
 
@@ -534,22 +711,23 @@ footer p:last-child{margin-bottom:0}
         /* The holder lookup is a separate, much heavier call, and free public
            nodes refuse it. A failure there must not sink the whole analysis:
            the authority checks above are already worth showing. */
+        setStatus("fetching the largest holders…", "busy");
         return holders(mint, info).catch(function(){ return null; });
       })
       .then(function(data){
         render(info, data);
         busy(false);
+        setStatus("connected via " + lastNode + (data ? "" : " · holder data unavailable"), "live");
       })
       .catch(function(e){
+        signalsEl.innerHTML = "";
         fail(e && e.message ? e.message : String(e));
-        setStatus("no connection", false);
+        setStatus("no connection", "");
       });
   }
 
-  /* Largest holders and their real owners. Resolves to null-ish only by
-     throwing — the caller decides what a failure means. */
   function holders(mint, info){
-    var largest, rows, supply = Number(info.supply);
+    var largest, supply = Number(info.supply);
 
     return rpc("getTokenLargestAccounts", [mint]).then(function(res){
       largest = (res && res.value) || [];
@@ -558,7 +736,7 @@ footer p:last-child{margin-bottom:0}
     }).then(function(res){
       var accs = (res && res.value) || [];
 
-      rows = largest.map(function(a,i){
+      var rows = largest.map(function(a,i){
         var acc = accs[i], owner = null;
         if(acc && acc.data && acc.data.parsed && acc.data.parsed.info){
           owner = acc.data.parsed.info.owner || null;
@@ -582,6 +760,7 @@ footer p:last-child{margin-bottom:0}
 
       /* A token account whose owner is itself owned by a program is a pool,
          not a person. Those must not count as whale concentration. */
+      setStatus("resolving wallet owners…", "busy");
       return rpc("getMultipleAccounts", [owners, {encoding:"jsonParsed"}]).then(function(ownerRes){
         var isProgramOwned = {};
         ((ownerRes && ownerRes.value) || []).forEach(function(v,i){
@@ -600,6 +779,14 @@ footer p:last-child{margin-bottom:0}
     var hasMint = !!info.mintAuthority;
     var hasFreeze = !!info.freezeAuthority;
 
+    /* Score starts full and loses points per armed risk. Every deduction is
+       tied to a check the user can see, so the number is explainable. */
+    var score = 100;
+    var checksDone = 2, checksTotal = 5;
+
+    if(hasMint) score -= 40;
+    if(hasFreeze) score -= 30;
+
     signalsEl.appendChild(sig(
       hasMint ? "bad" : "ok",
       "Mint authority",
@@ -614,17 +801,32 @@ footer p:last-child{margin-bottom:0}
     ));
 
     if(!data){
-      renderNoHolders(hasMint, hasFreeze);
+      renderNoHolders(hasMint, hasFreeze, Math.max(0, score), checksDone, checksTotal);
       return;
     }
 
     var rows = data.rows, ownerCounts = data.ownerCounts;
+    checksDone = 5;
 
     var nonPool = rows.filter(function(r){ return !r.isPool; });
     var top10 = nonPool.slice(0,10).reduce(function(a,r){ return a+r.share; },0);
+    var biggest = nonPool.length ? nonPool[0].share : 0;
+
     var concCls = top10 > 40 ? "bad" : (top10 > 20 ? "warn" : "ok");
-    signalsEl.appendChild(sig(concCls, "Top 10 outside pool", pct(top10),
-      "Share of supply held by the ten largest wallets, pool excluded."));
+    if(concCls === "bad") score -= 20; else if(concCls === "warn") score -= 10;
+
+    var bigCls = biggest > 25 ? "bad" : (biggest > 10 ? "warn" : "ok");
+    if(bigCls === "bad") score -= 15; else if(bigCls === "warn") score -= 7;
+
+    var top10El = sig(concCls, "Top 10 holders", "0.00%",
+      "Supply held by the ten largest wallets, pool excluded.");
+    signalsEl.appendChild(top10El);
+    countTo(top10El.querySelector(".v"), top10, "%", 2);
+
+    var bigEl = sig(bigCls, "Largest holder", "0.00%",
+      "Biggest single wallet outside the pool.");
+    signalsEl.appendChild(bigEl);
+    countTo(bigEl.querySelector(".v"), biggest, "%", 2);
 
     var clustered = 0, clusterOwners = {};
     Object.keys(ownerCounts).forEach(function(o){
@@ -634,29 +836,44 @@ footer p:last-child{margin-bottom:0}
       }
     });
     var clCls = clustered >= 5 ? "bad" : (clustered >= 2 ? "warn" : "ok");
-    signalsEl.appendChild(sig(clCls, "Bundled wallets", String(clustered),
-      "Top 20 accounts that share a single owner."));
+    if(clCls === "bad") score -= 20; else if(clCls === "warn") score -= 10;
+
+    var clEl = sig(clCls, "Bundled wallets", "0",
+      "Top 20 accounts that share a single owner.");
+    signalsEl.appendChild(clEl);
+    countTo(clEl.querySelector(".v"), clustered, "", 0);
+
+    signalsEl.appendChild(sig("na", "Snipers", "—",
+      "Needs transaction history. Not measured yet."));
 
     pop(signalsEl);
+    score = Math.max(0, Math.min(100, score));
 
     if(hasMint || hasFreeze){
       setVerdict("v-bad","Danger","An authority is still live",
-        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This is the most serious signal this tool can read.");
-    } else if(concCls === "bad" || clCls === "bad"){
+        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This is the most serious signal this tool can read.",
+        score, checksDone, checksTotal);
+    } else if(concCls === "bad" || clCls === "bad" || bigCls === "bad"){
       setVerdict("v-bad","Danger","Supply is heavily concentrated",
-        "A few wallets control a large share of the supply. If they sell together, the price does not hold.");
-    } else if(concCls === "warn" || clCls === "warn"){
+        "A few wallets control a large share of the supply. If they sell together, the price does not hold.",
+        score, checksDone, checksTotal);
+    } else if(concCls === "warn" || clCls === "warn" || bigCls === "warn"){
       setVerdict("v-warn","Caution","Concentration worth watching",
-        "Nothing disqualifying, but the distribution is not healthy. Check the owner column below.");
+        "Nothing disqualifying, but the distribution is not healthy. Check the owner column below.",
+        score, checksDone, checksTotal);
     } else {
-      setVerdict("v-ok","Clear","None of the three traps found",
-        "Authorities revoked and distribution is reasonable. That says nothing about the token's value — only that these mechanisms are not armed.");
+      setVerdict("v-ok","Clear","None of the checks tripped",
+        "Authorities revoked and supply reasonably spread. That says nothing about the token's value — only that these mechanisms are not armed.",
+        score, checksDone, checksTotal);
     }
 
     holdersCard.hidden = false;
+    unavailEl.hidden = true;
     holdersEl.innerHTML = "";
+
     rows.forEach(function(r,i){
       var tr = document.createElement("tr");
+      tr.style.animationDelay = Math.min(i * 22, 300) + "ms";
 
       var td0=document.createElement("td"); td0.className="rank"; td0.textContent=String(i+1);
 
@@ -683,22 +900,25 @@ footer p:last-child{margin-bottom:0}
       holdersEl.appendChild(tr);
     });
     holderSub.textContent = rows.length + " accounts read from the chain";
-    unavailEl.hidden = true;
   }
 
   /* Authorities came back but the holder call did not. Show what we have and
      say plainly what is missing, instead of failing the whole analysis. */
-  function renderNoHolders(hasMint, hasFreeze){
-    signalsEl.appendChild(sig("", "Top 10 outside pool", "—", "Needs a holder lookup. Not available right now."));
-    signalsEl.appendChild(sig("", "Bundled wallets", "—", "Needs a holder lookup. Not available right now."));
+  function renderNoHolders(hasMint, hasFreeze, score, checksDone, checksTotal){
+    signalsEl.appendChild(sig("na", "Top 10 holders", "—", "Needs a holder lookup. Not available right now."));
+    signalsEl.appendChild(sig("na", "Largest holder", "—", "Needs a holder lookup. Not available right now."));
+    signalsEl.appendChild(sig("na", "Bundled wallets", "—", "Needs a holder lookup. Not available right now."));
+    signalsEl.appendChild(sig("na", "Snipers", "—", "Needs transaction history. Not measured yet."));
     pop(signalsEl);
 
     if(hasMint || hasFreeze){
       setVerdict("v-bad","Danger","An authority is still live",
-        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This alone is enough to walk away.");
+        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This alone is enough to walk away.",
+        score, checksDone, checksTotal);
     } else {
-      setVerdict("v-warn","Partial","Authorities are revoked, holders unknown",
-        "Neither authority is armed, which is the good news. The holder distribution could not be read this time, so concentration and bundling are still unchecked.");
+      setVerdict("v-warn","Partial","Authorities revoked, holders unknown",
+        "Neither authority is armed, which is the good news. The holder distribution could not be read this time, so concentration and bundling are still unchecked.",
+        score, checksDone, checksTotal);
     }
 
     holdersCard.hidden = true;
@@ -707,8 +927,115 @@ footer p:last-child{margin-bottom:0}
 
   goBtn.addEventListener("click", analyse);
   caEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
-
   caEl.focus();
+})();
+
+
+/* ============================================================
+   Bottom price bar. Binance public websocket, no key, no account.
+   Falls back to a REST poll if the socket cannot be opened.
+   ============================================================ */
+(function(){
+  "use strict";
+
+  var PAIRS = [
+    {sym:"BTC", stream:"btcusdt", dec:0},
+    {sym:"ETH", stream:"ethusdt", dec:0},
+    {sym:"SOL", stream:"solusdt", dec:2}
+  ];
+
+  var live = document.getElementById("tkLive");
+  var last = {};
+  var ws = null, retry = 0, pollTimer = null;
+
+  function money(n, dec){
+    return "$" + n.toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec});
+  }
+
+  function paint(sym, price, changePct, dec){
+    var el = document.getElementById("tk-" + sym);
+    if(!el) return;
+    var pxEl = el.querySelector(".px"), chEl = el.querySelector(".ch");
+
+    pxEl.textContent = money(price, dec);
+
+    /* flash green or red on the tick itself, then settle back */
+    var prev = last[sym];
+    if(prev !== undefined && price !== prev){
+      pxEl.classList.remove("up","down");
+      void pxEl.offsetWidth;
+      pxEl.classList.add(price > prev ? "up" : "down");
+      setTimeout(function(){ pxEl.classList.remove("up","down"); }, 700);
+    }
+    last[sym] = price;
+
+    var c = Number(changePct);
+    chEl.textContent = (c >= 0 ? "+" : "") + c.toFixed(2) + "%";
+    chEl.classList.toggle("up", c >= 0);
+    chEl.classList.toggle("down", c < 0);
+  }
+
+  function setLive(on){ live && live.classList.toggle("on", !!on); }
+
+  function connect(){
+    var streams = PAIRS.map(function(p){ return p.stream + "@ticker"; }).join("/");
+    try{
+      ws = new WebSocket("wss://stream.binance.com:9443/stream?streams=" + streams);
+    }catch(e){ return startPolling(); }
+
+    ws.onopen = function(){ retry = 0; setLive(true); stopPolling(); };
+
+    ws.onmessage = function(m){
+      try{
+        var d = JSON.parse(m.data).data;
+        var p = PAIRS.filter(function(x){ return x.stream === d.s.toLowerCase(); })[0];
+        if(p) paint(p.sym, parseFloat(d.c), d.P, p.dec);
+      }catch(e){}
+    };
+
+    ws.onclose = function(){
+      setLive(false);
+      retry++;
+      if(retry <= 5){ setTimeout(connect, Math.min(1000 * retry * retry, 15000)); }
+      else { startPolling(); }
+    };
+
+    ws.onerror = function(){ try{ ws.close(); }catch(e){} };
+  }
+
+  /* Plain HTTP fallback: same numbers, refreshed every 20 seconds. */
+  function pollOnce(){
+    var symbols = encodeURIComponent(JSON.stringify(PAIRS.map(function(p){ return p.stream.toUpperCase(); })));
+    fetch("https://api.binance.com/api/v3/ticker/24hr?symbols=" + symbols)
+      .then(function(r){ return r.json(); })
+      .then(function(list){
+        setLive(true);
+        list.forEach(function(t){
+          var p = PAIRS.filter(function(x){ return x.stream.toUpperCase() === t.symbol; })[0];
+          if(p) paint(p.sym, parseFloat(t.lastPrice), t.priceChangePercent, p.dec);
+        });
+      })
+      .catch(function(){ setLive(false); });
+  }
+
+  function startPolling(){
+    if(pollTimer) return;
+    pollOnce();
+    pollTimer = setInterval(pollOnce, 20000);
+  }
+  function stopPolling(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  /* First paint from REST so the bar is never empty, then live socket. */
+  pollOnce();
+  connect();
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && (!ws || ws.readyState > 1)){
+      retry = 0; connect();
+    }
+  });
 })();
 </script>
 
