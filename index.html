@@ -133,10 +133,12 @@ a:hover{text-decoration:underline}
   background:radial-gradient(circle closest-side,
     rgba(153,69,255,.20), rgba(111,168,255,.11) 42%, transparent 72%);
   mix-blend-mode:screen;
-  transition:opacity .5s ease;
+  /* slow by default so it dies away gently once the pointer stops */
+  transition:opacity 1.9s cubic-bezier(.3,0,.5,1);
   will-change:transform;
 }
-.glow.on{opacity:1}
+/* but quick to come back the moment the pointer moves again */
+.glow.on{opacity:1; transition-duration:.28s}
 :root[data-theme="light"] .glow{
   mix-blend-mode:multiply;
   background:radial-gradient(circle closest-side,
@@ -1083,7 +1085,7 @@ footer p:last-child{margin-bottom:0}
     </div>
 
     <section class="whatis">
-      <h2>What is Clearing?</h2>
+      <h2>What is $CLEARING?</h2>
       <p>Clearing is a scanner for Solana tokens. You paste a contract address, it reads the blockchain and reports what decides whether you can get out — who can still print supply, who can freeze your wallet, how much real liquidity stands behind the price, and how tightly the supply sits in a few hands.</p>
       <p>No wallet connection. No signature. No account. It cannot touch your money because it never gets near it. <b>And when a check cannot run, it says so instead of guessing.</b></p>
       <div class="rule"></div>
@@ -2447,7 +2449,7 @@ var CLEARING_BUY = "";   // optional: a pump.fun / jup.ag / dexscreener link
   var mq = window.matchMedia;
   if(mq && (mq("(prefers-reduced-motion: reduce)").matches || mq("(hover: none)").matches)) return;
 
-  var x = 0, y = 0, queued = false;
+  var x = 0, y = 0, queued = false, idle = null;
 
   function draw(){
     queued = false;
@@ -2458,9 +2460,17 @@ var CLEARING_BUY = "";   // optional: a pump.fun / jup.ag / dexscreener link
     x = e.clientX; y = e.clientY;
     if(!el.classList.contains("on")) el.classList.add("on");
     if(!queued){ queued = true; requestAnimationFrame(draw); }
+
+    /* the light only lives while the pointer is moving — once it rests,
+       it fades out over the long transition instead of sitting there */
+    clearTimeout(idle);
+    idle = setTimeout(function(){ el.classList.remove("on"); }, 650);
   }, {passive:true});
 
-  document.addEventListener("mouseleave", function(){ el.classList.remove("on"); });
+  document.addEventListener("mouseleave", function(){
+    clearTimeout(idle);
+    el.classList.remove("on");
+  });
 })();
 
 
