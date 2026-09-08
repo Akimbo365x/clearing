@@ -1,257 +1,373 @@
-<title>Clearing Scanner</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0A0C10">
+
+<title>Clearing — Solana Token Scanner</title>
+<meta name="description" content="Paste a Solana contract address. Clearing reads the chain and shows the three traps that matter: live authorities, whale concentration, and wallets owned by the same person.">
+
+<!-- Tab icon. Placeholder mark — swap the data URI below for your own logo file. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236FA8FF'/%3E%3Ctext x='16' y='22.5' font-family='Helvetica,Arial,sans-serif' font-size='19' font-weight='700' text-anchor='middle' fill='%230A0C10'%3EC%3C/text%3E%3C/svg%3E">
+
+<!-- Link previews on Discord, Telegram, X. Add <meta property="og:image"> once the logo image exists. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Clearing">
+<meta property="og:title" content="Clearing — Solana Token Scanner">
+<meta property="og:description" content="Paste a contract address. See live authorities, whale concentration, and bundled wallets before you buy.">
+<meta property="og:url" content="https://clearing111.netlify.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Clearing — Solana Token Scanner">
+<meta name="twitter:description" content="Paste a contract address. See live authorities, whale concentration, and bundled wallets before you buy.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
 <style>
 :root{
-  --bg:#0B0D10;
-  --panel:#13161B;
-  --panel-2:#191D24;
-  --line:#242A33;
-  --line-soft:#1B2027;
-  --text:#E6E9EE;
-  --muted:#8A93A0;
-  --faint:#5E6773;
+  --bg:#0A0C10;
+  --panel:#111419;
+  --panel-2:#161A21;
+  --line:#212731;
+  --line-soft:#1A1F27;
+  --text:#E8EBF0;
+  --muted:#8C95A3;
+  --faint:#5C6674;
   --accent:#6FA8FF;
+  --accent-dim:#3B6DB8;
   --ok:#3FB98A;
   --warn:#E0A63C;
   --bad:#E05A4E;
 
-  --f-head:"Familjen Grotesk","Helvetica Neue",system-ui,sans-serif;
+  --f-sans:"Familjen Grotesk","Helvetica Neue",system-ui,-apple-system,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 
-  --maxw:900px;
-  --gutter:clamp(16px,3.5vw,32px);
+  --maxw:840px;
+  --gutter:clamp(18px,5vw,28px);
+  --r:14px;
+  --r-sm:9px;
 }
 
 *{box-sizing:border-box}
+
+html{-webkit-text-size-adjust:100%}
 
 body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family:var(--f-mono);
-  font-size:14px;
-  line-height:1.6;
+  font-family:var(--f-sans);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
 
-.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
+/* Soft glow behind the hero, purely decorative. */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(760px 420px at 50% -8%, rgba(111,168,255,.11), transparent 68%),
+    radial-gradient(560px 320px at 88% 4%, rgba(63,185,138,.05), transparent 70%);
+}
 
-/* ---------- header ---------- */
-header{border-bottom:1px solid var(--line); padding:22px 0 20px; margin-bottom:26px}
-.brand{display:flex; align-items:center; gap:11px; flex-wrap:wrap}
-.logo{
-  width:26px; height:26px; flex:none; display:grid; place-items:center;
-  background:var(--accent); color:var(--bg); font-family:var(--f-head); font-weight:700; font-size:14px;
-}
-h1{font-family:var(--f-head); font-weight:700; font-size:20px; margin:0; letter-spacing:.01em}
-.ver{font-size:10.5px; letter-spacing:.14em; color:var(--faint); text-transform:uppercase; margin-left:auto}
-.tagline{color:var(--muted); margin:12px 0 0; font-size:13.5px; max-width:68ch}
+.wrap{position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
 
-/* ---------- input ---------- */
-.console{border:1px solid var(--line); background:var(--panel); margin-bottom:20px}
-.row{display:flex; gap:0; border-bottom:1px solid var(--line-soft)}
-.row:last-child{border-bottom:none}
-.row label{
-  flex:none; width:118px; padding:12px 14px; font-size:10.5px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--faint); border-right:1px solid var(--line-soft);
-  display:flex; align-items:center;
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+
+/* ============ hero ============ */
+
+.hero{text-align:center; padding:clamp(44px,9vw,84px) 0 clamp(26px,4vw,36px)}
+
+.brand{display:inline-flex; align-items:center; gap:11px; margin-bottom:clamp(24px,5vw,38px)}
+.mark{
+  width:34px; height:34px; flex:none; display:grid; place-items:center;
+  background:var(--accent); color:var(--bg); border-radius:var(--r-sm);
+  font-weight:700; font-size:19px; line-height:1;
+  box-shadow:0 0 0 1px rgba(111,168,255,.35), 0 8px 26px -10px rgba(111,168,255,.65);
 }
-.row input{
-  flex:1; min-width:0; background:transparent; border:none; color:var(--text);
-  font-family:var(--f-mono); font-size:13.5px; padding:12px 14px; outline:none;
+.wordmark{font-weight:700; font-size:20px; letter-spacing:-.01em}
+.tag{
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--faint); border:1px solid var(--line); border-radius:100px; padding:3px 10px; margin-left:4px;
 }
-.row input::placeholder{color:var(--faint)}
-.row input:focus{background:var(--panel-2)}
-.actions{display:flex; gap:10px; padding:12px 14px; align-items:center; flex-wrap:wrap}
+
+h1{
+  font-size:clamp(30px,6.2vw,46px); font-weight:700; line-height:1.1;
+  letter-spacing:-.028em; margin:0 auto 18px; max-width:15ch;
+}
+h1 em{font-style:normal; color:var(--accent); white-space:nowrap}
+
+.lede{
+  color:var(--muted); font-size:clamp(15px,2.2vw,16.5px);
+  margin:0 auto; max-width:56ch;
+}
+
+/* ============ search ============ */
+
+.search-outer{padding-bottom:6px}
+
+.search{
+  display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  padding:8px 8px 8px 16px;
+  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  box-shadow:0 18px 44px -30px rgba(0,0,0,.9);
+}
+.search:focus-within{
+  border-color:var(--accent-dim); background:var(--panel-2);
+  box-shadow:0 0 0 4px rgba(111,168,255,.09), 0 18px 44px -30px rgba(0,0,0,.9);
+}
+.search svg{flex:none; width:17px; height:17px; color:var(--faint)}
+.search input{
+  flex:1; min-width:0; background:none; border:none; outline:none; color:var(--text);
+  font-family:var(--f-mono); font-size:14px; padding:11px 0;
+}
+.search input::placeholder{color:var(--faint)}
+
 button{
-  font-family:var(--f-mono); font-weight:700; font-size:12px; letter-spacing:.1em; text-transform:uppercase;
-  padding:9px 18px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); cursor:pointer;
+  font-family:var(--f-sans); font-weight:600; font-size:14px;
+  border-radius:var(--r-sm); border:1px solid var(--accent);
+  background:var(--accent); color:var(--bg);
+  padding:11px 22px; cursor:pointer; white-space:nowrap;
+  transition:background .16s ease, border-color .16s ease, opacity .16s ease, transform .16s ease;
 }
 button:hover:not(:disabled){background:#8CBAFF; border-color:#8CBAFF}
-button:disabled{opacity:.45; cursor:not-allowed}
-button.ghost{background:transparent; color:var(--muted); border-color:var(--line)}
-button.ghost:hover{color:var(--text); border-color:var(--faint); background:var(--panel-2)}
-button:focus-visible, input:focus-visible, a:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-.hint{font-size:11.5px; color:var(--faint); margin-left:auto}
-.hint a{color:var(--accent)}
-button.link{
-  background:none; border:none; padding:0; margin:0; color:var(--faint);
-  font-family:var(--f-mono); font-size:11.5px; font-weight:400; letter-spacing:0;
-  text-transform:none; text-decoration:underline; cursor:pointer;
-}
-button.link:hover{color:var(--text)}
-.status{
-  font-size:11.5px; color:var(--faint); margin:0 0 20px; padding-left:2px;
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-}
-.status .dot{width:6px; height:6px; flex:none; background:var(--faint); border-radius:50%}
-.status.live .dot{background:var(--ok)}
-.status.live{color:var(--muted)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.5; cursor:not-allowed}
+button.ghost{background:none; color:var(--muted); border-color:var(--line)}
+button.ghost:hover:not(:disabled){color:var(--text); border-color:var(--faint); background:var(--panel-2)}
 
-/* ---------- verdict ---------- */
-.verdict{border:1px solid var(--line); background:var(--panel); padding:18px 20px; margin-bottom:20px; display:none}
+.under{
+  display:flex; align-items:flex-start; justify-content:center; gap:9px;
+  margin:14px 0 0; font-size:12.5px; color:var(--faint);
+  font-family:var(--f-mono);
+}
+.under .dot{width:6px; height:6px; flex:none; margin-top:6px; background:var(--faint); border-radius:50%; transition:background .2s ease}
+.under.live .dot{background:var(--ok); box-shadow:0 0 0 3px rgba(63,185,138,.16)}
+.under.live{color:var(--muted)}
+.under .sep{color:var(--line)}
+.under button.reset{
+  background:none; border:none; padding:0; color:var(--faint); font-family:var(--f-mono);
+  font-size:12.5px; font-weight:400; text-decoration:underline; cursor:pointer;
+}
+.under button.reset:hover{color:var(--text)}
+
+/* ============ results ============ */
+
+.results{padding-top:clamp(30px,6vw,44px)}
+
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  margin-bottom:16px; overflow:hidden;
+}
+
+.reveal{animation:rise .38s cubic-bezier(.22,.9,.3,1) both}
+@keyframes rise{from{opacity:0; transform:translateY(9px)} to{opacity:1; transform:none}}
+
+/* verdict */
+.verdict{padding:22px 24px; position:relative; display:none}
 .verdict.on{display:block}
-.verdict .badge{
-  display:inline-block; font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
-  padding:4px 11px; border:1px solid currentColor; margin-bottom:12px;
+.verdict::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--line)}
+.v-ok::before{background:var(--ok)} .v-warn::before{background:var(--warn)} .v-bad::before{background:var(--bad)}
+.verdict .tags{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:13px}
+.badge{
+  font-family:var(--f-mono); font-weight:700; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  padding:4px 11px; border:1px solid currentColor; border-radius:100px;
 }
 .v-ok .badge{color:var(--ok)} .v-warn .badge{color:var(--warn)} .v-bad .badge{color:var(--bad)}
-.verdict h2{font-family:var(--f-head); font-weight:700; font-size:19px; margin:0 0 8px; line-height:1.3}
-.v-ok h2{color:var(--ok)} .v-warn h2{color:var(--warn)} .v-bad h2{color:var(--bad)}
-.verdict p{margin:0; color:var(--muted); font-size:13.5px; max-width:70ch}
-.demo-tag{
-  display:inline-block; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--warn); border:1px dashed var(--warn); padding:2px 8px; margin-bottom:12px;
+.sample{
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); border:1px dashed var(--line); border-radius:100px; padding:3px 10px;
 }
+.verdict h2{font-size:21px; font-weight:700; letter-spacing:-.015em; margin:0 0 7px; line-height:1.28}
+.v-ok h2{color:var(--ok)} .v-warn h2{color:var(--warn)} .v-bad h2{color:var(--bad)}
+.verdict p{margin:0; color:var(--muted); font-size:14.5px; max-width:66ch}
 
-/* ---------- signals ---------- */
-.signals{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-bottom:20px}
-@media(max-width:640px){ .signals{grid-template-columns:1fr} }
-.sig{background:var(--panel); padding:15px 16px; display:flex; flex-direction:column; gap:5px}
-.sig .k{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint)}
-.sig .v{font-family:var(--f-head); font-weight:700; font-size:20px; line-height:1.15; font-variant-numeric:tabular-nums}
-.sig .n{font-size:12px; color:var(--muted); line-height:1.5}
-.sig.ok .v{color:var(--ok)} .sig.warn .v{color:var(--warn)} .sig.bad .v{color:var(--bad)}
-.sig .stripe{height:3px; background:var(--line); margin-bottom:2px}
+/* signals */
+.signals{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:16px}
+@media(max-width:600px){ .signals{grid-template-columns:1fr} }
+.sig{background:var(--panel); padding:17px 19px 19px; display:flex; flex-direction:column; gap:4px}
+.sig .stripe{height:2px; width:34px; background:var(--line); border-radius:2px; margin-bottom:11px}
 .sig.ok .stripe{background:var(--ok)} .sig.warn .stripe{background:var(--warn)} .sig.bad .stripe{background:var(--bad)}
+.sig .k{font-family:var(--f-mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
+.sig .v{font-size:23px; font-weight:700; line-height:1.2; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.sig.ok .v{color:var(--ok)} .sig.warn .v{color:var(--warn)} .sig.bad .v{color:var(--bad)}
+.sig .n{font-size:13px; color:var(--muted); line-height:1.5; margin-top:3px}
 
-/* ---------- table ---------- */
-.panel{border:1px solid var(--line); background:var(--panel); margin-bottom:20px}
-.panel-head{
-  padding:12px 16px; border-bottom:1px solid var(--line-soft);
+/* holders */
+.card-head{
+  padding:15px 20px; border-bottom:1px solid var(--line-soft);
   display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
 }
-.panel-head h3{font-family:var(--f-head); font-weight:700; font-size:15px; margin:0}
-.panel-head .sub{font-size:11.5px; color:var(--faint); margin-left:auto}
+.card-head h3{font-size:15.5px; font-weight:600; margin:0; letter-spacing:-.01em}
+.card-head .sub{font-family:var(--f-mono); font-size:11.5px; color:var(--faint); margin-left:auto}
 .tablewrap{overflow-x:auto}
-table{border-collapse:collapse; width:100%; min-width:560px}
-th,td{text-align:left; padding:9px 16px; font-size:12.5px; border-bottom:1px solid var(--line-soft)}
-th{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:500}
-td{font-variant-numeric:tabular-nums; color:var(--muted)}
-td.addr{color:var(--text)}
-td.pct{text-align:right; font-weight:700; color:var(--text)}
-th.pct{text-align:right}
+table{border-collapse:collapse; width:100%; min-width:520px}
+th,td{text-align:left; padding:11px 20px; border-bottom:1px solid var(--line-soft)}
+th{font-family:var(--f-mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); font-weight:500}
+td{font-size:13px; color:var(--muted); font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+td.rank{color:var(--faint); width:1%; padding-right:0}
+td.addr{color:var(--text); white-space:nowrap}
+td.addr a{color:inherit}
+td.addr a:hover{color:var(--accent); text-decoration:none}
+th.pct,td.pct{text-align:right; width:1%; white-space:nowrap}
+td.pct b{color:var(--text); font-weight:700; font-size:13.5px}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--panel-2)}
+.bar{display:block; height:2px; border-radius:2px; background:var(--accent-dim); margin-top:5px; margin-left:auto; min-width:2px; opacity:.7}
 .chip{
-  display:inline-block; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
-  padding:1px 6px; border:1px solid currentColor; margin-left:7px;
+  display:inline-block; font-family:var(--f-mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+  padding:2px 7px; border:1px solid currentColor; border-radius:100px; margin-left:8px; vertical-align:1px;
 }
 .c-pool{color:var(--accent)} .c-cluster{color:var(--bad)}
 
-/* ---------- notes ---------- */
-.note{border-left:2px solid var(--line); padding:2px 0 2px 14px; color:var(--muted); font-size:12.5px; max-width:74ch; margin:0 0 12px}
-.note b{color:var(--text); font-weight:700}
+/* a result section we could not fill */
+.notice{padding:20px 24px}
+.notice h3{font-size:15.5px; font-weight:600; margin:0 0 6px; color:var(--warn)}
+.notice p{margin:0; color:var(--muted); font-size:13.5px; max-width:66ch}
+
+/* notes + footer */
+.notes{margin:26px 0 0}
+.note{border-left:2px solid var(--line); padding:1px 0 1px 16px; color:var(--muted); font-size:13.5px; max-width:70ch; margin:0 0 14px}
+.note b{color:var(--text); font-weight:600}
 .note.warn{border-left-color:var(--warn)}
 
 #err{
-  display:none; border:1px solid var(--bad); background:rgba(224,90,78,.07);
-  color:var(--bad); padding:13px 16px; margin-bottom:20px; font-size:13px;
+  display:none; border:1px solid rgba(224,90,78,.5); background:rgba(224,90,78,.07);
+  color:#F09189; padding:15px 18px; margin-bottom:16px; font-size:14px; border-radius:var(--r);
 }
 #err.on{display:block}
 
-footer{border-top:1px solid var(--line); margin-top:34px; padding:22px 0 44px; color:var(--faint); font-size:12px}
-footer p{margin:0 0 10px; max-width:76ch}
+footer{border-top:1px solid var(--line); margin-top:44px; padding:26px 0 56px; color:var(--faint); font-size:12.5px}
+footer p{margin:0 0 11px; max-width:74ch}
+footer p:last-child{margin-bottom:0}
 
-.spin{display:inline-block; width:11px; height:11px; border:2px solid var(--bg); border-top-color:transparent; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-1px; margin-right:7px}
+.spin{
+  display:inline-block; width:12px; height:12px; vertical-align:-1px; margin-right:8px;
+  border:2px solid currentColor; border-top-color:transparent; border-radius:50%;
+  animation:sp .7s linear infinite;
+}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){ .spin{animation:none} }
+
+@media (prefers-reduced-motion:reduce){
+  .spin{animation:none}
+  .reveal{animation:none}
+  *{transition:none !important}
+}
 </style>
+</head>
+<body>
 
 <div class="wrap">
 
-  <header>
+  <header class="hero">
     <div class="brand">
-      <span class="logo">C</span>
-      <h1>Clearing</h1>
-      <span class="ver">Scanner v1 · Solana</span>
+      <span class="mark">C</span>
+      <span class="wordmark">Clearing</span>
+      <span class="tag">Solana</span>
     </div>
-    <p class="tagline">Colle l'adresse d'un token Solana. L'outil lit la chaîne et te dit qui peut encore t'enfumer : autorités actives, concentration des gros porteurs, et wallets multiples appartenant au même propriétaire.</p>
+    <h1>See who can still <em>rug you</em>.</h1>
+    <p class="lede">Paste a contract address. Clearing reads the chain and shows the three traps that matter — live authorities, whale concentration, and multiple wallets owned by the same person.</p>
   </header>
 
-  <div class="console">
-    <div class="row">
-      <label for="mint">Token</label>
-      <input id="mint" type="text" spellcheck="false" placeholder="colle l'adresse du contrat et appuie sur Entrée">
+  <div class="search-outer">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <input id="ca" type="text" spellcheck="false" autocapitalize="off" autocomplete="off"
+             aria-label="Solana contract address"
+             placeholder="Paste a contract address and press Enter">
+      <button id="go">Analyze</button>
     </div>
-    <div class="row" id="rpcRow" hidden>
-      <label for="rpc">Endpoint</label>
-      <input id="rpc" type="text" spellcheck="false" placeholder="https://… (laisse vide pour les nœuds publics)">
-    </div>
-    <div class="actions">
-      <button id="go">Analyser</button>
-      <button class="ghost" id="clear">Effacer</button>
-      <span class="hint"><button class="link" id="advToggle" type="button">endpoint personnalisé</button></span>
-    </div>
+
+    <p class="under" id="status">
+      <span class="dot"></span><span id="statusText">No key, no account, no wallet connection. Just paste an address.</span>
+    </p>
   </div>
 
-  <p class="status" id="status">Aucune clé, aucun compte, aucune connexion de wallet. Colle une adresse et c'est tout.</p>
+  <div class="results">
 
-  <div id="err"></div>
+    <div id="err"></div>
 
-  <div class="verdict v-warn on" id="verdict">
-    <span class="demo-tag">Exemple — chiffres fictifs</span>
-    <span class="badge">Prudence</span>
-    <h2>Concentration élevée hors pool</h2>
-    <p>Voilà à quoi ressemble un résultat. Colle une vraie adresse et ton endpoint RPC au-dessus pour lancer une analyse réelle.</p>
+    <div class="card verdict v-warn on" id="verdict">
+      <div class="tags">
+        <span class="sample">Sample — placeholder numbers</span>
+        <span class="badge">Caution</span>
+      </div>
+      <h2>High concentration outside the pool</h2>
+      <p>This is what a result looks like. Paste a real contract address above to run a live analysis.</p>
+    </div>
+
+    <div class="signals" id="signals">
+      <div class="sig ok">
+        <div class="stripe"></div>
+        <div class="k">Mint authority</div>
+        <div class="v">Revoked</div>
+        <div class="n">Nobody can create new tokens.</div>
+      </div>
+      <div class="sig ok">
+        <div class="stripe"></div>
+        <div class="k">Freeze authority</div>
+        <div class="v">Revoked</div>
+        <div class="n">Nobody can freeze your wallet.</div>
+      </div>
+      <div class="sig warn">
+        <div class="stripe"></div>
+        <div class="k">Top 10 outside pool</div>
+        <div class="v">38.40%</div>
+        <div class="n">Share of supply held by the ten largest wallets, pool excluded.</div>
+      </div>
+      <div class="sig bad">
+        <div class="stripe"></div>
+        <div class="k">Bundled wallets</div>
+        <div class="v">6</div>
+        <div class="n">Top 20 accounts that share a single owner.</div>
+      </div>
+    </div>
+
+    <div class="card" id="holdersCard">
+      <div class="card-head">
+        <h3>Largest holders</h3>
+        <span class="sub" id="holderSub">sample · up to 20 accounts</span>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Account</th><th>Owner</th><th class="pct">Share</th></tr>
+          </thead>
+          <tbody id="holders">
+            <tr><td class="rank">1</td><td class="addr">5Qa4…9xTf<span class="chip c-pool">Pool</span></td><td>program</td><td class="pct"><b>51.20%</b><span class="bar" style="width:52px"></span></td></tr>
+            <tr><td class="rank">2</td><td class="addr">B7mK…2wDs<span class="chip c-cluster">Bundle</span></td><td>9Fh2…7kLm</td><td class="pct"><b>8.90%</b><span class="bar" style="width:9px"></span></td></tr>
+            <tr><td class="rank">3</td><td class="addr">Cc81…4pQr<span class="chip c-cluster">Bundle</span></td><td>9Fh2…7kLm</td><td class="pct"><b>7.40%</b><span class="bar" style="width:7px"></span></td></tr>
+            <tr><td class="rank">4</td><td class="addr">Dm93…8vNb</td><td>4Tz9…1cXy</td><td class="pct"><b>5.10%</b><span class="bar" style="width:5px"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card notice" id="unavail" hidden>
+      <h3>Holder list unavailable</h3>
+      <p>The free public nodes this site runs on refuse the call that lists a token's largest accounts. The authority checks above were still read live from the chain — only concentration and bundling are missing.</p>
+    </div>
+
+    <div class="notes">
+      <p class="note"><b>What the tool sees.</b> Mint and freeze authorities, total supply, and the twenty largest token accounts with their real owner. When several accounts in the top 20 share one owner, it gets flagged — that is the most common bundling pattern.</p>
+      <p class="note warn"><b>What it does not see yet.</b> Who bought in the first block, or who funded which wallet. That needs transaction history, and it is what version 2 is for. A green result does not mean a token is safe — only that these three traps are not present.</p>
+    </div>
+
+    <footer>
+      <p>Clearing only reads public Solana blockchain data. No wallet connection, no signature, no transaction — the tool cannot touch your money because it never gets near it.</p>
+      <p>This is not financial advice. Most tokens go to zero, including the ones that pass every check above.</p>
+    </footer>
+
   </div>
-
-  <div class="signals" id="signals">
-    <div class="sig ok">
-      <div class="stripe"></div>
-      <div class="k">Autorité de mint</div>
-      <div class="v">Révoquée</div>
-      <div class="n">Personne ne peut créer de nouveaux tokens.</div>
-    </div>
-    <div class="sig ok">
-      <div class="stripe"></div>
-      <div class="k">Autorité de gel</div>
-      <div class="v">Révoquée</div>
-      <div class="n">Personne ne peut geler ton wallet.</div>
-    </div>
-    <div class="sig warn">
-      <div class="stripe"></div>
-      <div class="k">Top 10 hors pool</div>
-      <div class="v">38,4 %</div>
-      <div class="n">Part de l'offre détenue par les dix plus gros wallets, pool exclu.</div>
-    </div>
-    <div class="sig bad">
-      <div class="stripe"></div>
-      <div class="k">Wallets groupés</div>
-      <div class="v">6</div>
-      <div class="n">Comptes du top 20 qui partagent un même propriétaire.</div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      <h3>Plus gros détenteurs</h3>
-      <span class="sub" id="holderSub">exemple · 20 comptes maximum</span>
-    </div>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr><th>#</th><th>Compte</th><th>Propriétaire</th><th class="pct">Part</th></tr>
-        </thead>
-        <tbody id="holders">
-          <tr><td>1</td><td class="addr">5Qa4…9xTf<span class="chip c-pool">Pool</span></td><td>programme</td><td class="pct">51,20 %</td></tr>
-          <tr><td>2</td><td class="addr">B7mK…2wDs<span class="chip c-cluster">Groupe A</span></td><td>9Fh2…7kLm</td><td class="pct">8,90 %</td></tr>
-          <tr><td>3</td><td class="addr">Cc81…4pQr<span class="chip c-cluster">Groupe A</span></td><td>9Fh2…7kLm</td><td class="pct">7,40 %</td></tr>
-          <tr><td>4</td><td class="addr">Dm93…8vNb</td><td>4Tz9…1cXy</td><td class="pct">5,10 %</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <p class="note"><b>Ce que l'outil voit.</b> Les autorités de mint et de gel, l'offre totale, et les vingt plus gros comptes de tokens avec leur propriétaire réel. Quand plusieurs comptes du top 20 partagent un propriétaire, c'est signalé — c'est le motif le plus courant du bundling.</p>
-  <p class="note warn"><b>Ce que l'outil ne voit pas encore.</b> Qui a acheté dans le premier bloc, ni qui a financé quel wallet. Ça demande l'historique des transactions, c'est la version 2. Un résultat vert ici ne veut donc pas dire qu'un token est sûr — seulement que ces trois pièges-là ne sont pas présents.</p>
-
-  <footer>
-    <p>Clearing lit uniquement des données publiques de la blockchain Solana. Aucune connexion de wallet, aucune signature, aucune transaction — l'outil ne peut rien faire de ton argent parce qu'il ne le touche jamais.</p>
-    <p>Ce n'est pas un conseil financier. La plupart des tokens perdent toute leur valeur, y compris ceux qui passent tous les contrôles ci-dessus.</p>
-  </footer>
 </div>
 
 <script>
@@ -260,14 +376,12 @@ footer p{margin:0 0 10px; max-width:76ch}
 
   var SYS = "11111111111111111111111111111111";
 
-  /* Public endpoints, no key, no signup. Tried in order; the first that
-     answers is kept for the rest of the session. A custom endpoint, when
-     the user sets one, is always tried first. */
-  /* "/api/rpc" is the server-side relay that exists once the site is deployed.
-     Same origin, so no CORS. On any other host it simply 404s and the chain
-     falls through to the direct public nodes below. */
+  /* Node chain, tried in order; the first that answers is kept for the rest
+     of the session. "/api/rpc" is the site's own server-side relay (same
+     origin, so no CORS). Off a deployed site it 404s and the chain falls
+     through to the public nodes below. */
   var NODES = [
-    {url:"/api/rpc",                            name:"relais du site"},
+    {url:"/api/rpc",                            name:"site relay"},
     {url:"https://rpc.solanatracker.io/public", name:"SolanaTracker"},
     {url:"https://solana-rpc.publicnode.com",   name:"PublicNode"},
     {url:"https://solana.drpc.org",             name:"dRPC"},
@@ -275,44 +389,52 @@ footer p{margin:0 0 10px; max-width:76ch}
   ];
 
   var $ = function(id){ return document.getElementById(id); };
-  var mintEl=$("mint"), rpcEl=$("rpc"), rpcRow=$("rpcRow"), advToggle=$("advToggle");
-  var goBtn=$("go"), clearBtn=$("clear"), errEl=$("err"), statusEl=$("status");
+  var caEl=$("ca"), goBtn=$("go"), errEl=$("err");
+  var statusEl=$("status"), statusText=$("statusText");
   var verdictEl=$("verdict"), signalsEl=$("signals");
   var holdersEl=$("holders"), holderSub=$("holderSub");
+  var holdersCard=$("holdersCard"), unavailEl=$("unavail");
 
-  var chain = NODES.slice();
   var activeIdx = 0;
 
-  try{
-    var saved = localStorage.getItem("clearing.rpc");
-    if(saved){ rpcEl.value = saved; rpcRow.hidden = false; }
-  }catch(e){}
-
-  function buildChain(){
-    var custom = rpcEl.value.trim();
-    chain = NODES.slice();
-    if(custom && /^https:\/\//.test(custom)){
-      chain.unshift({url:custom, name:"ton endpoint"});
-    }
-    activeIdx = 0;
-  }
-
   function short(a){ return a ? a.slice(0,4) + "…" + a.slice(-4) : "—"; }
-  function pct(n){ return n.toFixed(2).replace(".", ",") + " %"; }
+  function pct(n){ return n.toFixed(2) + "%"; }
 
   function setStatus(text, live){
-    statusEl.className = "status" + (live ? " live" : "");
-    statusEl.innerHTML = "";
-    var d = document.createElement("span"); d.className = "dot";
-    statusEl.appendChild(d);
-    statusEl.appendChild(document.createTextNode(text));
+    statusEl.className = "under" + (live ? " live" : "");
+    statusText.textContent = text;
+  }
+
+  function busy(on){
+    goBtn.disabled = on;
+    if(on){
+      goBtn.innerHTML = '<span class="spin"></span>Reading';
+    } else {
+      goBtn.textContent = "Analyze";
+    }
   }
 
   function fail(msg){
     errEl.textContent = msg;
     errEl.classList.add("on");
-    goBtn.disabled = false;
-    goBtn.textContent = "Analyser";
+    busy(false);
+  }
+
+  /* Re-trigger the entrance animation on an element. */
+  function pop(el){
+    el.classList.remove("reveal");
+    void el.offsetWidth;
+    el.classList.add("reveal");
+  }
+
+  function solscan(addr){
+    var a = document.createElement("a");
+    a.href = "https://solscan.io/account/" + addr;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.title = addr;
+    a.textContent = short(addr);
+    return a;
   }
 
   function callOne(url, method, params){
@@ -325,7 +447,6 @@ footer p{margin:0 0 10px; max-width:76ch}
       signal: ctrl.signal
     }).then(function(r){
       clearTimeout(t);
-      if(r.status === 429) throw new Error("__RETRY__");
       if(!r.ok) throw new Error("__RETRY__");
       return r.json();
     }).then(function(j){
@@ -349,12 +470,12 @@ footer p{margin:0 0 10px; max-width:76ch}
   function rpc(method, params){
     var attempts = 0;
     function go(){
-      if(attempts >= chain.length){
-        throw new Error("Aucun nœud n'a répondu. Depuis une page non déployée, les navigateurs bloquent souvent ces appels (CORS) — une fois le site en ligne, le relais du serveur règle ça. En attendant, tu peux coller ton propre endpoint via « endpoint personnalisé ».");
+      if(attempts >= NODES.length){
+        throw new Error("No Solana node answered. The public nodes are busy right now — wait a minute and try again.");
       }
-      var node = chain[activeIdx % chain.length];
+      var node = NODES[activeIdx % NODES.length];
       return callOne(node.url, method, params).then(function(res){
-        setStatus("connecté via " + node.name, true);
+        setStatus("connected via " + node.name, true);
         return res;
       }).catch(function(e){
         if(e && e.message === "__RETRY__"){
@@ -368,12 +489,15 @@ footer p{margin:0 0 10px; max-width:76ch}
   }
 
   function setVerdict(cls, badge, title, text){
-    verdictEl.className = "verdict on " + cls;
+    verdictEl.className = "card verdict on " + cls;
     verdictEl.innerHTML = "";
+    var tags=document.createElement("div"); tags.className="tags";
     var b=document.createElement("span"); b.className="badge"; b.textContent=badge;
+    tags.appendChild(b);
     var h=document.createElement("h2"); h.textContent=title;
     var p=document.createElement("p"); p.textContent=text;
-    verdictEl.appendChild(b); verdictEl.appendChild(h); verdictEl.appendChild(p);
+    verdictEl.appendChild(tags); verdictEl.appendChild(h); verdictEl.appendChild(p);
+    pop(verdictEl);
   }
 
   function sig(cls,k,v,n){
@@ -387,86 +511,89 @@ footer p{margin:0 0 10px; max-width:76ch}
   }
 
   function analyse(){
-    var mint = mintEl.value.trim();
+    var mint = caEl.value.trim();
     errEl.classList.remove("on");
 
-    if(!mint){ return fail("Colle l'adresse du token."); }
+    if(!mint){ return fail("Paste a contract address first."); }
     if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)){
-      return fail("Cette adresse n'a pas la forme d'une adresse Solana. Vérifie le copier-coller.");
+      return fail("That does not look like a Solana address. Check the copy-paste.");
     }
 
-    buildChain();
-    var custom = rpcEl.value.trim();
-    try{
-      if(custom) localStorage.setItem("clearing.rpc", custom);
-      else localStorage.removeItem("clearing.rpc");
-    }catch(e){}
+    busy(true);
+    setStatus("looking for an available node…", false);
 
-    goBtn.disabled = true;
-    goBtn.innerHTML = '<span class="spin"></span>Analyse';
-    setStatus("recherche d'un nœud disponible…", false);
-
-    var info, largest, supply;
+    var info;
 
     rpc("getAccountInfo", [mint, {encoding:"jsonParsed"}])
       .then(function(res){
-        if(!res || !res.value) throw new Error("Ce compte n'existe pas sur le mainnet. Mauvaise adresse ?");
+        if(!res || !res.value) throw new Error("This account does not exist on mainnet. Wrong address?");
         var parsed = res.value.data && res.value.data.parsed;
-        if(!parsed || parsed.type !== "mint") throw new Error("Cette adresse n'est pas un token. C'est peut-être un wallet ou un pool.");
+        if(!parsed || parsed.type !== "mint") throw new Error("This address is not a token. It might be a wallet or a pool.");
         info = parsed.info;
-        return rpc("getTokenLargestAccounts", [mint]);
-      })
-      .then(function(res){
-        largest = (res && res.value) || [];
-        if(!largest.length) throw new Error("Aucun détenteur trouvé pour ce token.");
-        return rpc("getMultipleAccounts", [largest.map(function(a){ return a.address; }), {encoding:"jsonParsed"}]);
-      })
-      .then(function(res){
-        var accs = (res && res.value) || [];
-        supply = Number(info.supply);
 
-        var rows = largest.map(function(a,i){
-          var acc = accs[i], owner = null;
-          if(acc && acc.data && acc.data.parsed && acc.data.parsed.info){
-            owner = acc.data.parsed.info.owner || null;
-          }
-          return {
-            address:a.address,
-            amount:Number(a.amount),
-            share: supply > 0 ? (Number(a.amount)/supply)*100 : 0,
-            owner:owner
-          };
-        });
-
-        var ownerCounts = {};
-        rows.forEach(function(r){ if(r.owner) ownerCounts[r.owner] = (ownerCounts[r.owner]||0)+1; });
-
-        var owners = Object.keys(ownerCounts).slice(0,100);
-        if(!owners.length){
-          rows.forEach(function(r){ r.isPool = false; });
-          return {rows:rows, ownerCounts:ownerCounts};
-        }
-        return rpc("getMultipleAccounts", [owners, {encoding:"jsonParsed"}]).then(function(ownerRes){
-          var isProgramOwned = {};
-          ((ownerRes && ownerRes.value) || []).forEach(function(v,i){
-            isProgramOwned[owners[i]] = !!(v && v.owner && v.owner !== SYS);
-          });
-          rows.forEach(function(r){ r.isPool = r.owner ? !!isProgramOwned[r.owner] : false; });
-          return {rows:rows, ownerCounts:ownerCounts};
-        });
+        /* The holder lookup is a separate, much heavier call, and free public
+           nodes refuse it. A failure there must not sink the whole analysis:
+           the authority checks above are already worth showing. */
+        return holders(mint, info).catch(function(){ return null; });
       })
       .then(function(data){
-        render(data.rows, data.ownerCounts, info);
-        goBtn.disabled = false;
-        goBtn.textContent = "Analyser";
+        render(info, data);
+        busy(false);
       })
       .catch(function(e){
         fail(e && e.message ? e.message : String(e));
-        setStatus("aucune connexion", false);
+        setStatus("no connection", false);
       });
   }
 
-  function render(rows, ownerCounts, info){
+  /* Largest holders and their real owners. Resolves to null-ish only by
+     throwing — the caller decides what a failure means. */
+  function holders(mint, info){
+    var largest, rows, supply = Number(info.supply);
+
+    return rpc("getTokenLargestAccounts", [mint]).then(function(res){
+      largest = (res && res.value) || [];
+      if(!largest.length) throw new Error("__NO_HOLDERS__");
+      return rpc("getMultipleAccounts", [largest.map(function(a){ return a.address; }), {encoding:"jsonParsed"}]);
+    }).then(function(res){
+      var accs = (res && res.value) || [];
+
+      rows = largest.map(function(a,i){
+        var acc = accs[i], owner = null;
+        if(acc && acc.data && acc.data.parsed && acc.data.parsed.info){
+          owner = acc.data.parsed.info.owner || null;
+        }
+        return {
+          address:a.address,
+          amount:Number(a.amount),
+          share: supply > 0 ? (Number(a.amount)/supply)*100 : 0,
+          owner:owner
+        };
+      });
+
+      var ownerCounts = {};
+      rows.forEach(function(r){ if(r.owner) ownerCounts[r.owner] = (ownerCounts[r.owner]||0)+1; });
+
+      var owners = Object.keys(ownerCounts).slice(0,100);
+      if(!owners.length){
+        rows.forEach(function(r){ r.isPool = false; });
+        return {rows:rows, ownerCounts:ownerCounts};
+      }
+
+      /* A token account whose owner is itself owned by a program is a pool,
+         not a person. Those must not count as whale concentration. */
+      return rpc("getMultipleAccounts", [owners, {encoding:"jsonParsed"}]).then(function(ownerRes){
+        var isProgramOwned = {};
+        ((ownerRes && ownerRes.value) || []).forEach(function(v,i){
+          isProgramOwned[owners[i]] = !!(v && v.owner && v.owner !== SYS);
+        });
+        rows.forEach(function(r){ r.isPool = r.owner ? !!isProgramOwned[r.owner] : false; });
+        return {rows:rows, ownerCounts:ownerCounts};
+      });
+    });
+  }
+
+  function render(info, data){
     info = info || {};
     signalsEl.innerHTML = "";
 
@@ -475,22 +602,29 @@ footer p{margin:0 0 10px; max-width:76ch}
 
     signalsEl.appendChild(sig(
       hasMint ? "bad" : "ok",
-      "Autorité de mint",
-      hasMint ? "Active" : "Révoquée",
-      hasMint ? "Le créateur peut encore fabriquer des tokens et diluer les tiens." : "Personne ne peut créer de nouveaux tokens."
+      "Mint authority",
+      hasMint ? "Live" : "Revoked",
+      hasMint ? "The creator can still mint tokens and dilute yours." : "Nobody can create new tokens."
     ));
     signalsEl.appendChild(sig(
       hasFreeze ? "bad" : "ok",
-      "Autorité de gel",
-      hasFreeze ? "Active" : "Révoquée",
-      hasFreeze ? "Le créateur peut geler ton wallet et bloquer ta revente." : "Personne ne peut geler ton wallet."
+      "Freeze authority",
+      hasFreeze ? "Live" : "Revoked",
+      hasFreeze ? "The creator can freeze your wallet and block your exit." : "Nobody can freeze your wallet."
     ));
+
+    if(!data){
+      renderNoHolders(hasMint, hasFreeze);
+      return;
+    }
+
+    var rows = data.rows, ownerCounts = data.ownerCounts;
 
     var nonPool = rows.filter(function(r){ return !r.isPool; });
     var top10 = nonPool.slice(0,10).reduce(function(a,r){ return a+r.share; },0);
     var concCls = top10 > 40 ? "bad" : (top10 > 20 ? "warn" : "ok");
-    signalsEl.appendChild(sig(concCls, "Top 10 hors pool", pct(top10),
-      "Part de l'offre détenue par les dix plus gros wallets, pool exclu."));
+    signalsEl.appendChild(sig(concCls, "Top 10 outside pool", pct(top10),
+      "Share of supply held by the ten largest wallets, pool excluded."));
 
     var clustered = 0, clusterOwners = {};
     Object.keys(ownerCounts).forEach(function(o){
@@ -500,52 +634,83 @@ footer p{margin:0 0 10px; max-width:76ch}
       }
     });
     var clCls = clustered >= 5 ? "bad" : (clustered >= 2 ? "warn" : "ok");
-    signalsEl.appendChild(sig(clCls, "Wallets groupés", String(clustered),
-      "Comptes du top 20 qui partagent un même propriétaire."));
+    signalsEl.appendChild(sig(clCls, "Bundled wallets", String(clustered),
+      "Top 20 accounts that share a single owner."));
+
+    pop(signalsEl);
 
     if(hasMint || hasFreeze){
-      setVerdict("v-bad","Danger","Une autorité est encore active",
-        "Le créateur garde un pouvoir sur le token après ton achat : créer de l'offre, ou geler ton wallet. C'est le signal le plus grave que cet outil sache lire.");
+      setVerdict("v-bad","Danger","An authority is still live",
+        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This is the most serious signal this tool can read.");
     } else if(concCls === "bad" || clCls === "bad"){
-      setVerdict("v-bad","Danger","Distribution très concentrée",
-        "Quelques wallets contrôlent une part importante de l'offre. S'ils vendent ensemble, le prix ne tient pas.");
+      setVerdict("v-bad","Danger","Supply is heavily concentrated",
+        "A few wallets control a large share of the supply. If they sell together, the price does not hold.");
     } else if(concCls === "warn" || clCls === "warn"){
-      setVerdict("v-warn","Prudence","Concentration à surveiller",
-        "Rien de disqualifiant, mais la répartition n'est pas saine. Regarde le détail des propriétaires ci-dessous.");
+      setVerdict("v-warn","Caution","Concentration worth watching",
+        "Nothing disqualifying, but the distribution is not healthy. Check the owner column below.");
     } else {
-      setVerdict("v-ok","Rien à signaler","Aucun des trois pièges détecté",
-        "Autorités révoquées et distribution correcte. Ça ne dit rien de la valeur du token, seulement que ces mécanismes-là ne sont pas armés.");
+      setVerdict("v-ok","Clear","None of the three traps found",
+        "Authorities revoked and distribution is reasonable. That says nothing about the token's value — only that these mechanisms are not armed.");
     }
 
+    holdersCard.hidden = false;
     holdersEl.innerHTML = "";
     rows.forEach(function(r,i){
       var tr = document.createElement("tr");
-      var td0=document.createElement("td"); td0.textContent=String(i+1);
-      var td1=document.createElement("td"); td1.className="addr"; td1.textContent=short(r.address);
+
+      var td0=document.createElement("td"); td0.className="rank"; td0.textContent=String(i+1);
+
+      var td1=document.createElement("td"); td1.className="addr";
+      td1.appendChild(solscan(r.address));
       if(r.isPool){
         var c=document.createElement("span"); c.className="chip c-pool"; c.textContent="Pool"; td1.appendChild(c);
       } else if(r.owner && clusterOwners[r.owner]){
-        var c2=document.createElement("span"); c2.className="chip c-cluster"; c2.textContent="Groupé"; td1.appendChild(c2);
+        var c2=document.createElement("span"); c2.className="chip c-cluster"; c2.textContent="Bundle"; td1.appendChild(c2);
       }
-      var td2=document.createElement("td"); td2.textContent = r.isPool ? "programme" : short(r.owner);
-      var td3=document.createElement("td"); td3.className="pct"; td3.textContent=pct(r.share);
+
+      var td2=document.createElement("td");
+      if(r.isPool){ td2.textContent = "program"; }
+      else if(r.owner){ td2.appendChild(solscan(r.owner)); }
+      else { td2.textContent = "—"; }
+
+      var td3=document.createElement("td"); td3.className="pct";
+      var b=document.createElement("b"); b.textContent=pct(r.share);
+      var bar=document.createElement("span"); bar.className="bar";
+      bar.style.width = Math.max(2, Math.min(100, r.share)) + "px";
+      td3.appendChild(b); td3.appendChild(bar);
+
       tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
       holdersEl.appendChild(tr);
     });
-    holderSub.textContent = rows.length + " comptes lus sur la chaîne";
+    holderSub.textContent = rows.length + " accounts read from the chain";
+    unavailEl.hidden = true;
   }
 
-  advToggle.addEventListener("click", function(){
-    rpcRow.hidden = !rpcRow.hidden;
-    if(!rpcRow.hidden) rpcEl.focus();
-  });
+  /* Authorities came back but the holder call did not. Show what we have and
+     say plainly what is missing, instead of failing the whole analysis. */
+  function renderNoHolders(hasMint, hasFreeze){
+    signalsEl.appendChild(sig("", "Top 10 outside pool", "—", "Needs a holder lookup. Not available right now."));
+    signalsEl.appendChild(sig("", "Bundled wallets", "—", "Needs a holder lookup. Not available right now."));
+    pop(signalsEl);
+
+    if(hasMint || hasFreeze){
+      setVerdict("v-bad","Danger","An authority is still live",
+        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This alone is enough to walk away.");
+    } else {
+      setVerdict("v-warn","Partial","Authorities are revoked, holders unknown",
+        "Neither authority is armed, which is the good news. The holder distribution could not be read this time, so concentration and bundling are still unchecked.");
+    }
+
+    holdersCard.hidden = true;
+    unavailEl.hidden = false;
+  }
+
   goBtn.addEventListener("click", analyse);
-  mintEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
-  rpcEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
-  clearBtn.addEventListener("click", function(){
-    mintEl.value = "";
-    errEl.classList.remove("on");
-    mintEl.focus();
-  });
+  caEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
+
+  caEl.focus();
 })();
 </script>
+
+</body>
+</html>

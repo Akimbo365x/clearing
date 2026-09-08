@@ -52,6 +52,7 @@ export default async (req) => {
     : PUBLIC_NODES;
 
   let lastStatus = 0;
+  let lastError = "";
 
   for (const url of nodes) {
     try {
@@ -77,10 +78,16 @@ export default async (req) => {
 
       const data = await upstream.json();
 
-      // Erreur de saturation → on change de nœud.
-      // Erreur métier (adresse inconnue) → c'est une vraie réponse.
-      if (data.error && /rate|limit|too many|busy/i.test(data.error.message || "")) {
-        continue;
+      // Erreur métier (adresse inconnue, paramètre invalide) → c'est une vraie
+      // réponse sur la question posée, on la transmet telle quelle.
+      // Tout autre message d'erreur veut dire que ce nœud-là ne va pas
+      // (saturé, proxy en vrac, méthode refusée) → on passe au suivant.
+      if (data.error) {
+        const m = data.error.message || "";
+        if (!/could not find|not found|invalid param/i.test(m)) {
+          lastError = m;
+          continue;
+        }
       }
 
       return json(data);
@@ -93,9 +100,10 @@ export default async (req) => {
     {
       error: {
         message:
-          "Aucun nœud Solana n'a répondu" +
-          (lastStatus ? " (dernier code : " + lastStatus + ")" : "") +
-          ". Réessaie dans une minute.",
+          "No Solana node answered" +
+          (lastStatus ? " (last status: " + lastStatus + ")" : "") +
+          (lastError ? " (last error: " + lastError + ")" : "") +
+          ". Try again in a minute.",
       },
     },
     502
