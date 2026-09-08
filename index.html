@@ -763,6 +763,53 @@ tbody tr:hover td{background:var(--panel-3)}
 }
 @media(max-width:560px){ .row-tok .when{display:none} .row-tok .n{display:none} }
 
+/* ============ red flags ============ */
+
+.flag{
+  border:1px solid var(--line); border-radius:var(--r); overflow:hidden;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  box-shadow:inset 0 1px 0 var(--edge), var(--card-sh);
+  margin-bottom:16px;
+}
+.flag-head{display:flex; align-items:center; gap:13px; padding:18px 22px 0}
+.flag-head .badge2{
+  width:34px; height:34px; border-radius:10px; flex:none; display:grid; place-items:center;
+  border:1px solid var(--line); background:var(--panel-3);
+}
+.flag-head .badge2 svg{width:17px; height:17px; display:block}
+.flag-head h3{font-size:17px; font-weight:700; margin:0; letter-spacing:-.015em}
+.flag-head .sev{
+  margin-left:auto; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; padding:3px 10px; border-radius:100px; border:1px solid currentColor;
+}
+.sev-bad{color:var(--bad)} .sev-warn{color:var(--warn)} .sev-info{color:var(--accent)}
+.flag.bad .badge2{color:var(--bad); border-color:rgba(224,90,78,.4)}
+.flag.warn .badge2{color:var(--warn); border-color:rgba(224,166,60,.4)}
+.flag.info .badge2{color:var(--accent); border-color:var(--accent-dim)}
+.flag-body{padding:14px 22px 22px}
+.flag-body p{color:var(--muted); font-size:14.5px; margin:0 0 12px; max-width:68ch}
+.flag-body p:last-child{margin-bottom:0}
+.flag-body b{color:var(--text); font-weight:600}
+.flag-body .tell{
+  margin-top:14px; padding:12px 15px; border-radius:10px;
+  background:var(--panel-3); border-left:2px solid var(--accent);
+  font-size:13.5px; color:var(--muted);
+}
+.flag-body .tell b{color:var(--text)}
+
+/* side-by-side holder maps */
+.maps{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0 4px}
+@media(max-width:700px){ .maps{grid-template-columns:1fr} }
+.map{border:1px solid var(--line); border-radius:12px; background:var(--bg); padding:14px; overflow:hidden}
+.map svg{width:100%; height:auto; display:block}
+.map .cap{
+  display:flex; align-items:center; gap:8px; margin-top:11px;
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+}
+.map .cap i{width:7px; height:7px; border-radius:50%; flex:none}
+.map.good .cap{color:var(--ok)} .map.good .cap i{background:var(--ok)}
+.map.risk .cap{color:var(--bad)} .map.risk .cap i{background:var(--bad)}
+
 /* ============ prose (method / about) ============ */
 
 .prose{max-width:70ch}
@@ -919,6 +966,7 @@ footer p:last-child{margin-bottom:0}
       <button class="tab" role="tab" id="tab-scanner"  data-tab="scanner"  aria-selected="true"  aria-controls="view-scanner">Scanner</button>
       <button class="tab" role="tab" id="tab-checked"  data-tab="checked"  aria-selected="false" aria-controls="view-checked">Checked</button>
       <button class="tab" role="tab" id="tab-trending" data-tab="trending" aria-selected="false" aria-controls="view-trending">Trending</button>
+      <button class="tab" role="tab" id="tab-flags"    data-tab="flags"    aria-selected="false" aria-controls="view-flags">Red flags</button>
       <button class="tab" role="tab" id="tab-method"   data-tab="method"   aria-selected="false" aria-controls="view-method">Method</button>
       <button class="tab" role="tab" id="tab-about"    data-tab="about"    aria-selected="false" aria-controls="view-about">About</button>
     </div>
@@ -1124,6 +1172,137 @@ footer p:last-child{margin-bottom:0}
       <h2 class="sec">Tokens getting attention right now</h2>
       <p class="sec">Straight from DexScreener's public feed of promoted Solana tokens — no ranking or endorsement from Clearing. Pick one and it goes through the same checks as anything you paste yourself.</p>
       <div class="grid" id="trendGrid"><div class="empty">Loading the feed…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RED FLAGS ============ -->
+<div class="view" id="view-flags" role="tabpanel" aria-labelledby="tab-flags">
+  <div class="wrap">
+    <div class="slab">
+      <div class="eyebrow">Field guide</div>
+      <h2 class="sec">What to look at before you buy</h2>
+      <p class="sec">Six patterns that cost people money, what each one actually is, and how to spot it. No jargon left unexplained.</p>
+
+      <!-- bundles -->
+      <div class="flag bad">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="M3 12.5 12 17l9-4.5"/><path d="M3 17.5 12 22l9-4.5"/></svg></span>
+          <h3>Bundled wallets</h3>
+          <span class="sev sev-bad">High risk</span>
+        </div>
+        <div class="flag-body">
+          <p>A <b>bundle</b> is one person holding a large share of the supply through several wallets instead of one, so the token looks widely held when it is not.</p>
+          <p>It is done at launch: the creator buys from a dozen addresses in the same block. On a holders list you see twelve different accounts. In reality one hand controls all twelve, and it can sell all of them in the same second.</p>
+
+          <div class="maps">
+            <div class="map good">
+              <svg viewBox="0 0 300 190" role="img" aria-label="Healthy spread: unconnected holders of varied size">
+                <circle cx="70" cy="60" r="26" fill="#3FB98A" fill-opacity=".22" stroke="#3FB98A" stroke-opacity=".55"/>
+                <circle cx="160" cy="45" r="17" fill="#3FB98A" fill-opacity=".18" stroke="#3FB98A" stroke-opacity=".45"/>
+                <circle cx="230" cy="75" r="21" fill="#3FB98A" fill-opacity=".18" stroke="#3FB98A" stroke-opacity=".45"/>
+                <circle cx="105" cy="130" r="14" fill="#3FB98A" fill-opacity=".15" stroke="#3FB98A" stroke-opacity=".4"/>
+                <circle cx="180" cy="140" r="19" fill="#3FB98A" fill-opacity=".18" stroke="#3FB98A" stroke-opacity=".45"/>
+                <circle cx="252" cy="145" r="11" fill="#3FB98A" fill-opacity=".14" stroke="#3FB98A" stroke-opacity=".38"/>
+                <circle cx="38" cy="140" r="9" fill="#3FB98A" fill-opacity=".14" stroke="#3FB98A" stroke-opacity=".38"/>
+              </svg>
+              <div class="cap"><i></i>Healthy spread</div>
+            </div>
+
+            <div class="map risk">
+              <svg viewBox="0 0 300 190" role="img" aria-label="Bundled supply: several wallets all linked to one owner">
+                <g stroke="#E05A4E" stroke-opacity=".5" stroke-width="1.4">
+                  <path d="M150 95 L72 52"/><path d="M150 95 L226 55"/><path d="M150 95 L66 138"/>
+                  <path d="M150 95 L232 140"/><path d="M150 95 L150 32"/><path d="M150 95 L150 160"/>
+                </g>
+                <circle cx="72" cy="52" r="17" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="226" cy="55" r="16" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="66" cy="138" r="15" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="232" cy="140" r="16" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="150" cy="32" r="14" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="150" cy="160" r="14" fill="#E05A4E" fill-opacity=".2" stroke="#E05A4E" stroke-opacity=".5"/>
+                <circle cx="150" cy="95" r="22" fill="#E05A4E" fill-opacity=".38" stroke="#E05A4E" stroke-opacity=".8"/>
+              </svg>
+              <div class="cap"><i></i>One owner behind six wallets</div>
+            </div>
+          </div>
+
+          <div class="tell"><b>How Clearing catches it:</b> it resolves the owner wallet behind each of the twenty largest token accounts. When several trace back to the same owner outside a liquidity pool, they are counted and each row is tagged <b>Bundle</b>.</div>
+        </div>
+      </div>
+
+      <!-- clusters / bubble maps -->
+      <div class="flag warn">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="8" r="3.4"/><circle cx="17" cy="7" r="2.6"/><circle cx="15" cy="16.5" r="4"/><path d="M9.9 9.6 12 14M9.5 7.6 14.5 7.2"/></svg></span>
+          <h3>Clusters and bubble maps</h3>
+          <span class="sev sev-warn">Read carefully</span>
+        </div>
+        <div class="flag-body">
+          <p>A <b>bubble map</b> draws every large holder as a circle — the bigger the circle, the more supply it holds — and joins two circles with a line when those wallets have sent tokens to each other or were funded by the same source.</p>
+          <p>A <b>cluster</b> is a group of circles tied together by those lines. It means the wallets are related. One cluster holding a third of the supply is one decision away from dumping it, no matter how many separate addresses it appears to be.</p>
+          <p>Reading one is simple: <b>lots of separate circles, no lines</b> is a real crowd. <b>A web of connected circles</b> is one or a few people wearing several hats.</p>
+          <div class="tell"><b>Careful:</b> connections are not automatically fraud. Exchanges, market makers and liquidity pools legitimately move tokens between their own wallets. What matters is how much supply the cluster holds and whether it looks like the team.</div>
+        </div>
+      </div>
+
+      <!-- authorities -->
+      <div class="flag bad">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg></span>
+          <h3>Live mint and freeze authorities</h3>
+          <span class="sev sev-bad">Walk away</span>
+        </div>
+        <div class="flag-body">
+          <p>The <b>mint authority</b> is the address allowed to create new tokens. If it is still set, the creator can print supply after you buy and your share shrinks — instantly, without warning.</p>
+          <p>The <b>freeze authority</b> is worse in practice. It can freeze individual token accounts, meaning your wallet specifically can be blocked from selling while everyone else keeps trading. You watch the chart without being able to touch it.</p>
+          <p>Both should read <b>Revoked</b>. There is no legitimate reason for a memecoin to keep them.</p>
+        </div>
+      </div>
+
+      <!-- liquidity -->
+      <div class="flag warn">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.4 6 10.4a6 6 0 0 1-12 0C6 9.4 12 3 12 3z"/></svg></span>
+          <h3>Thin liquidity</h3>
+          <span class="sev sev-warn">Exit risk</span>
+        </div>
+        <div class="flag-body">
+          <p>Market cap is a multiplication, not money in a box. <b>Liquidity</b> is the actual pool of SOL sitting opposite the token — it is what your sell order gets paid from.</p>
+          <p>A token showing a one million dollar cap with ten thousand of liquidity cannot pay out its holders. The first serious seller empties the pool and everyone behind them gets nothing. Under <b>3% of market cap</b> the exit is thin, under <b>1%</b> it is barely tradable.</p>
+        </div>
+      </div>
+
+      <!-- snipers -->
+      <div class="flag warn">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="2.2"/></svg></span>
+          <h3>Snipers</h3>
+          <span class="sev sev-warn">Early pressure</span>
+        </div>
+        <div class="flag-body">
+          <p>A <b>sniper</b> is a bot that buys in the first block, before a human could even open the page. It gets in at the lowest price of the token's life.</p>
+          <p>They are not there to hold. A token where snipers took a large share carries a wall of sellers sitting above you from the very first minute, and every rise gets sold into.</p>
+          <div class="tell"><b>Being straight with you:</b> Clearing does not measure this yet. It needs the token's full transaction history, which is a different and far heavier set of calls than everything else on the site. The box stays empty rather than showing a number that was guessed.</div>
+        </div>
+      </div>
+
+      <!-- age -->
+      <div class="flag info">
+        <div class="flag-head">
+          <span class="badge2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg></span>
+          <h3>Age</h3>
+          <span class="sev sev-info">Context</span>
+        </div>
+        <div class="flag-body">
+          <p>Most rugs happen in the first hours. A token under a day old has proven nothing — not the team, not the liquidity, not the intention behind it.</p>
+          <p>The reverse is not a guarantee either: <b>an old token is not a safe token</b>. It has only survived the window where the majority of exits happen. Everything else still has to be checked.</p>
+        </div>
+      </div>
+
+      <div class="notes" style="margin-top:26px">
+        <p class="note warn"><b>The one rule that survives everything.</b> No scanner, this one included, can tell you a token is safe. It can only tell you which specific traps are not set. A clean report means those checks passed — nothing more. Most tokens go to zero regardless.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -2201,7 +2380,7 @@ footer p:last-child{margin-bottom:0}
 (function(){
   "use strict";
 
-  var VIEWS = ["scanner","checked","trending","method","about"];
+  var VIEWS = ["scanner","checked","trending","flags","method","about"];
   var trendLoaded = false;
 
   function show(name, push){
