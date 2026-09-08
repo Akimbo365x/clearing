@@ -386,6 +386,43 @@ p.sec{color:var(--muted); margin:0 0 22px; max-width:66ch; font-size:14.5px}
 .reveal{animation:rise .42s cubic-bezier(.22,.9,.3,1) both}
 @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
 
+/* ---- token identity header ---- */
+.thead{display:flex; align-items:center; gap:16px; padding:18px 22px; flex-wrap:wrap}
+.thead .avatar{
+  width:52px; height:52px; border-radius:14px; flex:none; object-fit:cover;
+  background:var(--panel-3); box-shadow:0 6px 20px -8px rgba(0,0,0,.8);
+}
+.thead .avatar.ph{display:grid; place-items:center; color:var(--faint); font-size:14px; font-weight:700}
+.thead .who{min-width:0; flex:1}
+.thead .nm{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.thead .nm h2{font-size:20px; font-weight:700; letter-spacing:-.02em; margin:0; color:var(--text)}
+.thead .nm .tick{
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); border:1px solid var(--accent-dim); border-radius:100px; padding:2px 9px;
+}
+.thead .addr-row{display:flex; align-items:center; gap:7px; margin-top:5px}
+.thead .ca{
+  font-family:var(--f-mono); font-size:11.5px; color:var(--faint);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:34ch;
+}
+.copy{
+  all:unset; cursor:pointer; width:22px; height:22px; border-radius:6px; flex:none;
+  display:grid; place-items:center; color:var(--faint);
+  transition:color .16s ease, background .16s ease;
+}
+.copy:hover{color:var(--text); background:var(--panel-3)}
+.copy svg{width:12px; height:12px; display:block; pointer-events:none}
+.copy.done{color:var(--ok)}
+.thead .facts{display:flex; gap:22px; flex-wrap:wrap; margin-left:auto}
+.thead .fact{text-align:right}
+.thead .fact .fk{display:block; font-family:var(--f-mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:2px}
+.thead .fact .fv{display:block; font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+@media(max-width:640px){
+  .thead .facts{margin-left:0; width:100%; gap:18px}
+  .thead .fact{text-align:left}
+}
+
 /* ---- verdict + score ---- */
 .verdict{display:none; padding:24px 26px; position:relative}
 .verdict.on{display:flex; gap:26px; align-items:center}
@@ -433,11 +470,23 @@ p.sec{color:var(--muted); margin:0 0 22px; max-width:66ch; font-size:14.5px}
   transition:background .18s ease;
 }
 .sig:hover{background:var(--panel-3)}
-.sig .stripe{height:2px; width:32px; background:var(--line); border-radius:2px; margin-bottom:11px}
-.sig.ok .stripe{background:var(--ok); box-shadow:0 0 10px rgba(63,185,138,.5)}
-.sig.warn .stripe{background:var(--warn); box-shadow:0 0 10px rgba(224,166,60,.45)}
-.sig.bad .stripe{background:var(--bad); box-shadow:0 0 10px rgba(224,90,78,.45)}
+.sig .top{display:flex; align-items:center; gap:10px; margin-bottom:12px}
+.sig .ic{
+  width:30px; height:30px; border-radius:9px; flex:none; display:grid; place-items:center;
+  background:var(--panel-3); color:var(--faint); border:1px solid var(--line);
+  transition:color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.sig .ic svg{width:15px; height:15px; display:block}
+.sig.ok .ic{color:var(--ok); border-color:rgba(63,185,138,.4); box-shadow:0 0 16px -6px rgba(63,185,138,.8)}
+.sig.warn .ic{color:var(--warn); border-color:rgba(224,166,60,.4); box-shadow:0 0 16px -6px rgba(224,166,60,.8)}
+.sig.bad .ic{color:var(--bad); border-color:rgba(224,90,78,.4); box-shadow:0 0 16px -6px rgba(224,90,78,.8)}
 .sig .k{font-family:var(--f-mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
+
+/* thin gauge under the numeric signals */
+.sig .gauge{height:3px; border-radius:3px; background:var(--line); margin:10px 0 2px; overflow:hidden}
+.sig .gauge i{display:block; height:100%; border-radius:3px; width:0;
+  transition:width 1s cubic-bezier(.2,.8,.25,1); background:var(--faint)}
+.sig.ok .gauge i{background:var(--ok)} .sig.warn .gauge i{background:var(--warn)} .sig.bad .gauge i{background:var(--bad)}
 .sig .v{font-size:22px; font-weight:700; line-height:1.25; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
 .sig.ok .v{color:var(--ok)} .sig.warn .v{color:var(--warn)} .sig.bad .v{color:var(--bad)}
 .sig.na .v{color:var(--faint)}
@@ -727,6 +776,8 @@ footer p:last-child{margin-bottom:0}
 
       <div id="err"></div>
 
+      <div class="card thead" id="tokenHead" hidden></div>
+
       <div class="card verdict v-warn on" id="verdict">
         <div class="score">
           <svg viewBox="0 0 108 108" aria-hidden="true">
@@ -745,14 +796,7 @@ footer p:last-child{margin-bottom:0}
         </div>
       </div>
 
-      <div class="signals" id="signals">
-        <div class="sig ok"><div class="stripe"></div><div class="k">Mint authority</div><div class="v">Revoked</div><div class="n">Nobody can create new tokens.</div></div>
-        <div class="sig ok"><div class="stripe"></div><div class="k">Freeze authority</div><div class="v">Revoked</div><div class="n">Nobody can freeze your wallet.</div></div>
-        <div class="sig warn"><div class="stripe"></div><div class="k">Top 10 holders</div><div class="v">38.40%</div><div class="n">Supply held by the ten largest wallets, pool excluded.</div></div>
-        <div class="sig warn"><div class="stripe"></div><div class="k">Largest holder</div><div class="v">12.80%</div><div class="n">Biggest single wallet outside the pool.</div></div>
-        <div class="sig bad"><div class="stripe"></div><div class="k">Bundled wallets</div><div class="v">6</div><div class="n">Top 20 accounts that share a single owner.</div></div>
-        <div class="sig na"><div class="stripe"></div><div class="k">Snipers</div><div class="v">—</div><div class="n">Needs transaction history. Not measured yet.</div></div>
-      </div>
+      <div class="signals" id="signals"></div>
 
       <div class="card" id="holdersCard">
         <div class="card-head">
@@ -909,7 +953,6 @@ footer p:last-child{margin-bottom:0}
     <div class="bar-token" id="barToken" hidden></div>
     <div class="bar-sep"></div>
     <div class="bar-mkt">
-      <span class="live" id="tkLive"><i></i><span>live</span></span>
       <span class="tk" id="tk-BTC">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#F7931A"/><path fill="#fff" d="M16.2 10.5c.2-1.4-.85-2.15-2.3-2.65l.47-1.9-1.15-.28-.46 1.85c-.3-.08-.62-.15-.93-.22l.46-1.86-1.15-.28-.47 1.9-.74-.18-1.6-.4-.3 1.23s.85.2.84.2c.47.12.55.43.54.67l-.54 2.16.12.04-.12-.03-.75 3.03c-.06.14-.2.35-.53.27.01.02-.85-.21-.85-.21l-.57 1.32 1.5.38.83.21-.48 1.92 1.15.28.47-1.9c.31.09.62.17.92.24l-.47 1.89 1.15.29.48-1.92c1.96.37 3.44.22 4.06-1.55.5-1.43-.02-2.25-1.05-2.79.75-.17 1.32-.67 1.47-1.7zm-2.63 3.68c-.36 1.43-2.77.66-3.55.46l.63-2.54c.78.2 3.3.58 2.92 2.08zm.36-3.7c-.33 1.3-2.33.64-2.98.48l.57-2.3c.65.16 2.74.46 2.41 1.82z"/></svg>
         <span class="sym">BTC</span><span class="px">—</span><span class="ch">—</span>
@@ -1010,6 +1053,87 @@ footer p:last-child{margin-bottom:0}
     a.textContent = short(addr);
     return a;
   }
+
+  /* ---------------- token header ---------------- */
+
+  var tokenHead = $("tokenHead");
+
+  function compact(n){
+    if(!isFinite(n)) return "—";
+    var u = [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
+    for(var i=0;i<u.length;i++){
+      if(n >= u[i][0]) return (n / u[i][0]).toFixed(n / u[i][0] >= 100 ? 0 : 1) + u[i][1];
+    }
+    return n.toLocaleString("en-US", {maximumFractionDigits:2});
+  }
+
+  var COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+  var DONE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>';
+
+  /* Opened as soon as an address is accepted, then filled in as the two
+     sources answer: identity from DexScreener, supply straight from chain. */
+  function headOpen(mint){
+    tokenHead.innerHTML =
+      '<span class="avatar ph" id="thAvatar">…</span>' +
+      '<div class="who">' +
+        '<div class="nm"><h2 id="thName">Reading…</h2><span class="tick" id="thSym" hidden></span></div>' +
+        '<div class="addr-row"><span class="ca" id="thCa"></span>' +
+          '<button class="copy" id="thCopy" type="button" title="Copy address" aria-label="Copy address">' +
+          COPY_SVG + '</button></div>' +
+      '</div>' +
+      '<div class="facts" id="thFacts"></div>';
+
+    $("thCa").textContent = mint;
+    $("thCopy").addEventListener("click", function(){
+      var btn = this;
+      var done = function(){
+        btn.innerHTML = DONE_SVG;
+        btn.classList.add("done");
+        setTimeout(function(){ btn.innerHTML = COPY_SVG; btn.classList.remove("done"); }, 1400);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(mint).then(done, function(){});
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = mint; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); done(); }catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+
+    tokenHead.hidden = false;
+    pop(tokenHead);
+  }
+
+  function headFacts(info){
+    var el = $("thFacts");
+    if(!el || !info) return;
+    var dec = Number(info.decimals || 0);
+    var supply = Number(info.supply || 0) / Math.pow(10, dec);
+    el.innerHTML =
+      '<span class="fact"><span class="fk">Supply</span><span class="fv">' + compact(supply) + '</span></span>' +
+      '<span class="fact"><span class="fk">Decimals</span><span class="fv">' + dec + '</span></span>';
+  }
+
+  /* identity comes from the bottom bar module, which already queried it */
+  document.addEventListener("clearing:meta", function(e){
+    var d = e.detail || {};
+    var nameEl = $("thName"), symEl = $("thSym"), avEl = $("thAvatar");
+    if(!nameEl) return;
+    nameEl.textContent = d.name || "Unknown token";
+    if(d.sym){ symEl.textContent = d.sym; symEl.hidden = false; }
+    if(d.img && avEl){
+      var img = document.createElement("img");
+      img.className = "avatar"; img.src = d.img; img.alt = ""; img.loading = "lazy";
+      img.onerror = function(){ img.replaceWith(avEl); };
+      avEl.replaceWith(img);
+    } else if(avEl){
+      avEl.textContent = (d.sym || "?").slice(0,3).toUpperCase();
+    }
+  });
 
   /* ---------------- rpc ---------------- */
 
@@ -1114,13 +1238,42 @@ footer p:last-child{margin-bottom:0}
     pop(verdictEl);
   }
 
-  function sig(cls,k,v,n){
-    var d=document.createElement("div"); d.className="sig " + cls;
-    var st=document.createElement("div"); st.className="stripe";
-    var kk=document.createElement("div"); kk.className="k"; kk.textContent=k;
-    var vv=document.createElement("div"); vv.className="v"; vv.textContent=v;
-    var nn=document.createElement("div"); nn.className="n"; nn.textContent=n;
-    d.appendChild(st); d.appendChild(kk); d.appendChild(vv); d.appendChild(nn);
+  var SIG_ICONS = {
+    mint:   '<path d="M12 3v18M5 8h9a3 3 0 0 1 0 6H5"/>',
+    freeze: '<path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11M12 6l-3-2.5M12 6l3-2.5M12 18l-3 2.5M12 18l3 2.5"/>',
+    group:  '<path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.4"/><path d="M17 4.2a3.4 3.4 0 0 1 0 5.6M22 20v-1.5a4 4 0 0 0-3-3.8"/>',
+    whale:  '<path d="M18 20v-1.5a4 4 0 0 0-4-4h-4a4 4 0 0 0-4 4V20"/><circle cx="12" cy="7" r="3.6"/>',
+    bundle: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="M3 12.5 12 17l9-4.5"/><path d="M3 17.5 12 22l9-4.5"/>',
+    scope:  '<circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="2.2"/>'
+  };
+
+  /* cls: ok|warn|bad|na — icon: key of SIG_ICONS — gauge: 0-100, or omitted */
+  function sig(cls, k, v, n, icon, gauge){
+    var d = document.createElement("div");
+    d.className = "sig " + cls;
+
+    var top = document.createElement("div"); top.className = "top";
+    var ic = document.createElement("span"); ic.className = "ic";
+    ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                   (SIG_ICONS[icon] || "") + '</svg>';
+    var kk = document.createElement("div"); kk.className = "k"; kk.textContent = k;
+    top.appendChild(ic); top.appendChild(kk);
+
+    var vv = document.createElement("div"); vv.className = "v"; vv.textContent = v;
+    d.appendChild(top); d.appendChild(vv);
+
+    if(typeof gauge === "number"){
+      var g = document.createElement("div"); g.className = "gauge";
+      var fill = document.createElement("i");
+      g.appendChild(fill);
+      d.appendChild(g);
+      /* let the node land in the DOM before the width transition starts */
+      setTimeout(function(){ fill.style.width = Math.max(2, Math.min(100, gauge)) + "%"; }, 60);
+    }
+
+    var nn = document.createElement("div"); nn.className = "n"; nn.textContent = n;
+    d.appendChild(nn);
     return d;
   }
 
@@ -1128,7 +1281,7 @@ footer p:last-child{margin-bottom:0}
     signalsEl.innerHTML = "";
     for(var i=0;i<6;i++){
       var d=document.createElement("div"); d.className="sig skel";
-      d.innerHTML='<div class="stripe"></div><div class="k">·</div><div class="v">·</div><div class="n">·</div>';
+      d.innerHTML='<div class="top"><span class="ic"></span><div class="k">·</div></div><div class="v">·</div><div class="n">·</div>';
       signalsEl.appendChild(d);
     }
     holdersCard.hidden = true;
@@ -1148,6 +1301,7 @@ footer p:last-child{margin-bottom:0}
 
     busy(true);
     skeleton();
+    headOpen(mint);
     setStatus("reading the mint account…", "busy");
     document.dispatchEvent(new CustomEvent("clearing:token", {detail:{mint:mint}}));
 
@@ -1159,6 +1313,7 @@ footer p:last-child{margin-bottom:0}
         var parsed = res.value.data && res.value.data.parsed;
         if(!parsed || parsed.type !== "mint") throw new Error("This address is not a token. It might be a wallet or a pool.");
         info = parsed.info;
+        headFacts(info);
 
         /* The holder lookup is a separate, much heavier call, and free public
            nodes refuse it. A failure there must not sink the whole analysis:
@@ -1243,13 +1398,15 @@ footer p:last-child{margin-bottom:0}
       hasMint ? "bad" : "ok",
       "Mint authority",
       hasMint ? "Live" : "Revoked",
-      hasMint ? "The creator can still mint tokens and dilute yours." : "Nobody can create new tokens."
+      hasMint ? "The creator can still mint tokens and dilute yours." : "Nobody can create new tokens.",
+      "mint"
     ));
     signalsEl.appendChild(sig(
       hasFreeze ? "bad" : "ok",
       "Freeze authority",
       hasFreeze ? "Live" : "Revoked",
-      hasFreeze ? "The creator can freeze your wallet and block your exit." : "Nobody can freeze your wallet."
+      hasFreeze ? "The creator can freeze your wallet and block your exit." : "Nobody can freeze your wallet.",
+      "freeze"
     ));
 
     if(!data){
@@ -1271,12 +1428,12 @@ footer p:last-child{margin-bottom:0}
     if(bigCls === "bad") score -= 15; else if(bigCls === "warn") score -= 7;
 
     var top10El = sig(concCls, "Top 10 holders", "0.00%",
-      "Supply held by the ten largest wallets, pool excluded.");
+      "Supply held by the ten largest wallets, pool excluded.", "group", top10);
     signalsEl.appendChild(top10El);
     countTo(top10El.querySelector(".v"), top10, "%", 2);
 
     var bigEl = sig(bigCls, "Largest holder", "0.00%",
-      "Biggest single wallet outside the pool.");
+      "Biggest single wallet outside the pool.", "whale", biggest);
     signalsEl.appendChild(bigEl);
     countTo(bigEl.querySelector(".v"), biggest, "%", 2);
 
@@ -1291,12 +1448,12 @@ footer p:last-child{margin-bottom:0}
     if(clCls === "bad") score -= 20; else if(clCls === "warn") score -= 10;
 
     var clEl = sig(clCls, "Bundled wallets", "0",
-      "Top 20 accounts that share a single owner.");
+      "Top 20 accounts that share a single owner.", "bundle", (clustered / 20) * 100);
     signalsEl.appendChild(clEl);
     countTo(clEl.querySelector(".v"), clustered, "", 0);
 
     signalsEl.appendChild(sig("na", "Snipers", "—",
-      "Needs transaction history. Not measured yet."));
+      "Needs transaction history. Not measured yet.", "scope"));
 
     pop(signalsEl);
     score = Math.max(0, Math.min(100, score));
@@ -1357,10 +1514,10 @@ footer p:last-child{margin-bottom:0}
   /* Authorities came back but the holder call did not. Show what we have and
      say plainly what is missing, instead of failing the whole analysis. */
   function renderNoHolders(hasMint, hasFreeze, score, checksDone, checksTotal){
-    signalsEl.appendChild(sig("na", "Top 10 holders", "—", "Needs a holder lookup. Not available right now."));
-    signalsEl.appendChild(sig("na", "Largest holder", "—", "Needs a holder lookup. Not available right now."));
-    signalsEl.appendChild(sig("na", "Bundled wallets", "—", "Needs a holder lookup. Not available right now."));
-    signalsEl.appendChild(sig("na", "Snipers", "—", "Needs transaction history. Not measured yet."));
+    signalsEl.appendChild(sig("na", "Top 10 holders", "—", "Needs a holder lookup. Not available right now.", "group"));
+    signalsEl.appendChild(sig("na", "Largest holder", "—", "Needs a holder lookup. Not available right now.", "whale"));
+    signalsEl.appendChild(sig("na", "Bundled wallets", "—", "Needs a holder lookup. Not available right now.", "bundle"));
+    signalsEl.appendChild(sig("na", "Snipers", "—", "Needs transaction history. Not measured yet.", "scope"));
     pop(signalsEl);
 
     if(hasMint || hasFreeze){
@@ -1376,6 +1533,19 @@ footer p:last-child{margin-bottom:0}
     holdersCard.hidden = true;
     unavailEl.hidden = false;
   }
+
+  /* The grid ships empty and is filled here, so the sample uses exactly the
+     same renderer as a real result — one code path, no drifting markup. */
+  function sample(){
+    signalsEl.innerHTML = "";
+    signalsEl.appendChild(sig("ok","Mint authority","Revoked","Nobody can create new tokens.","mint"));
+    signalsEl.appendChild(sig("ok","Freeze authority","Revoked","Nobody can freeze your wallet.","freeze"));
+    signalsEl.appendChild(sig("warn","Top 10 holders","38.40%","Supply held by the ten largest wallets, pool excluded.","group",38.4));
+    signalsEl.appendChild(sig("warn","Largest holder","12.80%","Biggest single wallet outside the pool.","whale",12.8));
+    signalsEl.appendChild(sig("bad","Bundled wallets","6","Top 20 accounts that share a single owner.","bundle",30));
+    signalsEl.appendChild(sig("na","Snipers","—","Needs transaction history. Not measured yet.","scope"));
+  }
+  sample();
 
   goBtn.addEventListener("click", analyse);
   caEl.addEventListener("keydown", function(e){ if(e.key === "Enter") analyse(); });
@@ -1738,6 +1908,11 @@ footer p:last-child{margin-bottom:0}
 
     barToken.hidden = false;
     remember(mint, base.symbol || "", name, img);
+
+    /* the result header upstairs shows the same identity */
+    document.dispatchEvent(new CustomEvent("clearing:meta", {
+      detail:{mint:mint, name:name, sym:base.symbol || "", img:img || ""}
+    }));
   }
 
   /* ---------------- recent strip ---------------- */
