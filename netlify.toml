@@ -1,0 +1,9 @@
+# Dit a Netlify quoi publier quand le site est relie a GitHub.
+# Sans ce fichier, Netlify essaie parfois de "construire" le site
+# alors qu'il n'y a rien a construire : c'est du HTML tout pret.
+
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"

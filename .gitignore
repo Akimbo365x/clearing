@@ -1,0 +1,8 @@
+# Fichiers crees par Windows / macOS, inutiles dans le depot
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Dossiers d'outils
+.netlify/
+node_modules/
