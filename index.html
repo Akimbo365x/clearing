@@ -559,8 +559,12 @@ tbody tr:hover td{background:var(--panel-3)}
 .c-pool{color:var(--accent)} .c-cluster{color:var(--bad)}
 
 .notice{padding:20px 24px}
-.notice h3{font-size:15.5px; font-weight:600; margin:0 0 6px; color:var(--warn)}
-.notice p{margin:0; color:var(--muted); font-size:13.5px; max-width:66ch}
+.notice h3{font-size:15.5px; font-weight:600; margin:0 0 8px; color:var(--warn)}
+.notice p{margin:0 0 10px; color:var(--muted); font-size:13.5px; max-width:70ch}
+.notice p:last-child{margin-bottom:0}
+.notice b{color:var(--text); font-weight:600}
+.notice code{font-family:var(--f-mono); font-size:12px; background:var(--panel-3);
+  border:1px solid var(--line); border-radius:5px; padding:1px 6px; color:var(--text)}
 
 .notes{margin:26px 0 0}
 .note{border-left:2px solid var(--line); padding:1px 0 1px 16px; color:var(--muted); font-size:13.5px; max-width:70ch; margin:0 0 14px}
@@ -878,8 +882,9 @@ footer p:last-child{margin-bottom:0}
       </div>
 
       <div class="card notice" id="unavail" hidden>
-        <h3>Holder data unavailable</h3>
-        <p>The free public nodes this site runs on refuse the call that lists a token's largest accounts. The authority checks above were still read live from the chain — concentration, bundling and the holder table are the parts that are missing.</p>
+        <h3>Three checks are switched off</h3>
+        <p><b>Top 10 holders</b>, <b>Largest holder</b> and <b>Bundled wallets</b> all depend on one call — <code>getTokenLargestAccounts</code> — and every free public Solana node refuses it. This is not specific to the token you scanned: it is the same on every address, every time.</p>
+        <p>Everything else on this page was read live and is accurate. Connecting the site to a dedicated RPC endpoint switches these three back on immediately, with no other change.</p>
       </div>
     </div>
 
@@ -1627,17 +1632,31 @@ footer p:last-child{margin-bottom:0}
 
     var score = 100, done = 0, total = 7;
     var worst = "ok";
+    var flags = [];
     function worse(c){
       if(c === "bad") worst = "bad";
       else if(c === "warn" && worst !== "bad") worst = "warn";
+    }
+    /* every non-green check records why, so the verdict can name it instead
+       of saying something vague like "not clean either" */
+    function flag(level, title, detail){
+      if(level === "bad" || level === "warn") flags.push({level:level, title:title, detail:detail});
     }
 
     /* 1-2 — authorities, straight from the mint account */
     var hasMint = !!info.mintAuthority;
     var hasFreeze = !!info.freezeAuthority;
     done += 2;
-    if(hasMint){ score -= 40; worse("bad"); }
-    if(hasFreeze){ score -= 30; worse("bad"); }
+    if(hasMint){
+      score -= 40; worse("bad");
+      flag("bad", "The mint authority is still live",
+           "the creator can print more supply whenever they want");
+    }
+    if(hasFreeze){
+      score -= 30; worse("bad");
+      flag("bad", "The freeze authority is still live",
+           "your wallet can be frozen so you cannot sell");
+    }
 
     signalsEl.appendChild(sig(hasMint ? "bad" : "ok", "Mint authority",
       hasMint ? "Live" : "Revoked",
@@ -1663,6 +1682,8 @@ footer p:last-child{margin-bottom:0}
 
       if(lc === "bad"){ score -= 25; } else if(lc === "warn"){ score -= 12; }
       worse(lc);
+      flag(lc, "Liquidity is only " + ratio.toFixed(1) + "% of the market cap",
+           "there may not be enough depth to sell into");
 
       var note = capped
         ? "At least " + ratio.toFixed(1) + "% of market cap, counted over the 30 largest markets only — the real depth is higher."
@@ -1684,6 +1705,9 @@ footer p:last-child{margin-bottom:0}
       var ac = days < 1 ? "bad" : (days < 7 ? "warn" : "ok");
       if(ac === "bad"){ score -= 15; } else if(ac === "warn"){ score -= 7; }
       worse(ac);
+      flag(ac, "This token is only " + ageStr(dex.launched) + " old",
+           days < 1 ? "nothing about it has been proven yet"
+                    : "it is still inside the window where most rugs happen");
       signalsEl.appendChild(sig(ac, "Age", ageStr(dex.launched),
         days < 1 ? "Less than a day old. Nothing has been proven yet."
                  : (days < 7 ? "Under a week old. Still the riskiest window."
@@ -1705,6 +1729,8 @@ footer p:last-child{margin-bottom:0}
       var concCls = top10 > 40 ? "bad" : (top10 > 20 ? "warn" : "ok");
       if(concCls === "bad"){ score -= 20; } else if(concCls === "warn"){ score -= 10; }
       worse(concCls);
+      flag(concCls, "The ten largest wallets hold " + top10.toFixed(1) + "% of the supply",
+           "if they sell together the price does not hold");
       var e1 = sig(concCls, "Top 10 holders", "0.00%",
         "Supply held by the ten largest wallets, pool excluded.", "group", top10);
       signalsEl.appendChild(e1);
@@ -1713,6 +1739,8 @@ footer p:last-child{margin-bottom:0}
       var bigCls = biggest > 25 ? "bad" : (biggest > 10 ? "warn" : "ok");
       if(bigCls === "bad"){ score -= 15; } else if(bigCls === "warn"){ score -= 7; }
       worse(bigCls);
+      flag(bigCls, "One wallet alone holds " + biggest.toFixed(1) + "% of the supply",
+           "a single seller can move the price on their own");
       var e2 = sig(bigCls, "Largest holder", "0.00%",
         "Biggest single wallet outside the pool.", "whale", biggest);
       signalsEl.appendChild(e2);
@@ -1728,14 +1756,17 @@ footer p:last-child{margin-bottom:0}
       var clCls = clustered >= 5 ? "bad" : (clustered >= 2 ? "warn" : "ok");
       if(clCls === "bad"){ score -= 20; } else if(clCls === "warn"){ score -= 10; }
       worse(clCls);
+      flag(clCls, clustered + " of the top twenty accounts share one owner",
+           "that is one person made to look like several holders");
       var e3 = sig(clCls, "Bundled wallets", "0",
         "Top 20 accounts that share a single owner.", "bundle", (clustered / 20) * 100);
       signalsEl.appendChild(e3);
       countTo(e3.querySelector(".v"), clustered, "", 0);
     } else {
-      signalsEl.appendChild(sig("na", "Top 10 holders", "—", "Needs a holder lookup. Not available right now.", "group"));
-      signalsEl.appendChild(sig("na", "Largest holder", "—", "Needs a holder lookup. Not available right now.", "whale"));
-      signalsEl.appendChild(sig("na", "Bundled wallets", "—", "Needs a holder lookup. Not available right now.", "bundle"));
+      var lockNote = "Locked: free public nodes refuse the holder lookup this check needs.";
+      signalsEl.appendChild(sig("na", "Top 10 holders", "Locked", lockNote, "group"));
+      signalsEl.appendChild(sig("na", "Largest holder", "Locked", lockNote, "whale"));
+      signalsEl.appendChild(sig("na", "Bundled wallets", "Locked", lockNote, "bundle"));
     }
 
     /* never scored — stated plainly rather than guessed */
@@ -1749,26 +1780,41 @@ footer p:last-child{margin-bottom:0}
     renderActivity(dex);
     renderMarkets(dex);
 
-    /* verdict follows the worst signal that actually ran */
-    if(hasMint || hasFreeze){
-      setVerdict("v-bad","Danger","An authority is still live",
-        "The creator keeps power over the token after you buy: minting more supply, or freezing your wallet. This is the most serious signal this tool can read.",
-        score, done, total);
-    } else if(worst === "bad"){
-      setVerdict("v-bad","Danger","A check came back in the red",
-        "Something in the liquidity, the age or the distribution is bad enough to stand on its own. Read the cards below before doing anything.",
-        score, done, total);
-    } else if(worst === "warn"){
-      setVerdict("v-warn","Caution","Nothing fatal, but not clean either",
-        "No single check disqualifies this token, yet more than one is short of comfortable. The detail is in the cards below.",
-        score, done, total);
-    } else if(done < total){
+    /* The verdict names the checks that actually tripped. A reader should
+       never have to guess which card the headline is talking about. */
+    var missing = total - done;
+    var tail = missing
+      ? " " + missing + " check" + (missing > 1 ? "s" : "") + " could not run, so this is not the full picture."
+      : "";
+
+    if(flags.length){
+      var bads = flags.filter(function(f){ return f.level === "bad"; });
+      var lead = bads.length ? bads[0] : flags[0];
+      var others = flags.filter(function(f){ return f !== lead; });
+
+      var text = lead.title.charAt(0).toLowerCase() + lead.title.slice(1);
+      text = "The headline is that " + text + " — " + lead.detail + ".";
+      if(others.length === 1){
+        text += " Also flagged: " + others[0].title.charAt(0).toLowerCase() + others[0].title.slice(1) + ".";
+      } else if(others.length > 1){
+        text += " Also flagged: " + others.map(function(f){
+          return f.title.charAt(0).toLowerCase() + f.title.slice(1);
+        }).join("; ") + ".";
+      }
+      text += tail;
+
+      setVerdict(bads.length ? "v-bad" : "v-warn",
+                 bads.length ? "Danger" : "Caution",
+                 lead.title, text, score, done, total);
+
+    } else if(missing){
       setVerdict("v-warn","Partial","Everything measurable came back clean",
-        "The checks that could run all passed. The holder distribution could not be read this time, so concentration and bundling are still unknown.",
+        "Every check that could run passed." + tail +
+        " Holder concentration and bundling are the ones still missing.",
         score, done, total);
     } else {
-      setVerdict("v-ok","Clear","None of the checks tripped",
-        "Authorities revoked, liquidity reasonable, and supply spread out. That says nothing about the token's value — only that these mechanisms are not armed.",
+      setVerdict("v-ok","Clear","All seven checks passed",
+        "Authorities revoked, liquidity reasonable, the token is not brand new, and the supply is spread out. That says nothing about its value — only that none of these mechanisms are armed against you.",
         score, done, total);
     }
 
