@@ -7,3 +7,26 @@
 
 [functions]
   directory = "netlify/functions"
+
+# La page elle-meme ne doit jamais etre servie depuis le cache du navigateur
+# sans verification : sinon une mise a jour reste invisible pendant des heures.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Les images changent rarement : on les laisse en cache une journee.
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
