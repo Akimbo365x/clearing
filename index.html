@@ -931,6 +931,23 @@ tbody tr:hover td{background:var(--panel-3)}
 .post .body2{
   color:var(--muted); font-size:14.5px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
 }
+.post .acts{display:flex; align-items:center; gap:6px; margin-top:11px}
+.act{
+  all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+  padding:5px 11px; border-radius:100px; color:var(--faint);
+  font-family:var(--f-mono); font-size:11.5px; font-variant-numeric:tabular-nums;
+  transition:color .16s ease, background .16s ease;
+}
+.act svg{width:14px; height:14px; display:block; pointer-events:none}
+.act:hover{background:var(--panel-3)}
+.act.like:hover{color:#F2618C}
+.act.like.on{color:#F2618C}
+.act.like.on svg{fill:#F2618C}
+.act.rp:hover{color:var(--ok)}
+.act.rp.on{color:var(--ok)}
+.act:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+.act[disabled]{cursor:default; opacity:.6}
+.act[disabled]:hover{background:none; color:var(--faint)}
 
 /* ============ prose (method / about) ============ */
 
@@ -2976,6 +2993,41 @@ footer p:last-child{margin-bottom:0}
     });
   }
 
+  var HEART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.4 4.6 13a4.7 4.7 0 0 1 6.6-6.6l.8.8.8-.8A4.7 4.7 0 0 1 19.4 13z"/></svg>';
+  var REPOST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h11a3.5 3.5 0 0 1 3.5 3.5v1"/><path d="m7 5.5-3 3 3 3"/>' +
+    '<path d="M20 15.5H9A3.5 3.5 0 0 1 5.5 12v-1"/><path d="m17 18.5 3-3-3-3"/></svg>';
+
+  /* Like and repost. Both are simple toggles: one person, one count. */
+  function actions(p){
+    var row = document.createElement("div");
+    row.className = "acts";
+
+    [["like", HEART, p.likes], ["rp", REPOST, p.reposts]].forEach(function(spec){
+      var kind = spec[0], svg = spec[1], who = spec[2] || [];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "act " + kind + (me && who.indexOf(me.name) !== -1 ? " on" : "");
+      btn.innerHTML = svg + '<span>' + (who.length || "") + '</span>';
+      btn.title = kind === "like" ? "Like" : "Repost";
+
+      if(!me){
+        btn.disabled = true;
+        btn.title = "Sign in to " + (kind === "like" ? "like" : "repost");
+      } else {
+        btn.addEventListener("click", function(){
+          api({action: kind === "like" ? "like" : "repost", token:token, id:p.id})
+            .then(function(j){ paintPosts(j.posts); })
+            .catch(function(e){ alert(e.message); });
+        });
+      }
+      row.appendChild(btn);
+    });
+
+    return row;
+  }
+
   function paintPosts(posts){
     if(!list) return;
     if(!posts.length){
@@ -2996,6 +3048,8 @@ footer p:last-child{margin-bottom:0}
       el.querySelector(".at").textContent = ago(p.at);
       /* textContent, never innerHTML: a post is text and only text */
       el.querySelector(".body2").textContent = p.text;
+
+      el.appendChild(actions(p));
 
       if(me && (me.dev || me.name === p.name)){
         var del = document.createElement("button");
@@ -3020,6 +3074,11 @@ footer p:last-child{margin-bottom:0}
   }
 
   window.clearingLoadFeed = loadFeed;
+
+  /* The tab router runs before this module exists, so a visitor landing
+     straight on #social would never get the feed loaded. Catch that here. */
+  var socialView = document.getElementById("view-social");
+  if(socialView && socialView.classList.contains("on")) loadFeed();
 
   /* restore the session if the stored token is still valid */
   if(token){

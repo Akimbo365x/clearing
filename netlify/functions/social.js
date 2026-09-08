@@ -204,6 +204,8 @@ export default async (req) => {
       dev: user.key === devName(),
       text,
       at: Date.now(),
+      likes: [],
+      reposts: [],
     });
     await feed.setJSON(FEED_KEY, list.slice(0, MAX_POSTS));
 
@@ -211,6 +213,26 @@ export default async (req) => {
     await users.setJSON(user.key, user);
 
     return json({ ok: true, posts: list.slice(0, MAX_POSTS) });
+  }
+
+  // ---- like et repost : un interrupteur, un compte par personne ----
+  if (action === "like" || action === "repost") {
+    const user = await current();
+    if (!user) return json({ error: "Not signed in" }, 401);
+
+    const field = action === "like" ? "likes" : "reposts";
+    const id = String(body.id || "");
+    const list = await posts();
+    const post = list.find((p) => p.id === id);
+    if (!post) return json({ error: "Message not found" }, 404);
+
+    if (!Array.isArray(post[field])) post[field] = [];
+    const at = post[field].indexOf(user.name);
+    if (at === -1) post[field].push(user.name);
+    else post[field].splice(at, 1);
+
+    await feed.setJSON(FEED_KEY, list);
+    return json({ ok: true, posts: list });
   }
 
   // ---- suppression : son propre message, ou n'importe lequel pour le dev ----
